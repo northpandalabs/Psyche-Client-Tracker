@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-electron/
+release/
+*.sqlite
+*.sqlite3
+*.db
+.env
+.DS_Store
+coverage/
+playwright-report/
+test-results/

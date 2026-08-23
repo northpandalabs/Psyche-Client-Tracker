@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Launch Practice Analytics",
+      "type": "shell",
+      "command": "Set-Location '${workspaceFolder}/practice-analytics-codex'; npm run build; if ($?) { npx electron . }",
+      "options": {
+        "cwd": "${workspaceFolder}/practice-analytics-codex"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+    ,
+    {
+      "label": "Publish Exe",
+      "type": "shell",
+      "command": "Set-Location '${workspaceFolder}/practice-analytics-codex'; npm run dist:publish",
+      "options": {
+        "cwd": "${workspaceFolder}/practice-analytics-codex"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build"
+    }
+  ]
+}

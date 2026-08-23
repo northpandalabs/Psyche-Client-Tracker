@@ -1,0 +1,58 @@
+{
+  "name": "practice-analytics-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first practice analytics desktop application",
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "build": "tsc --noEmit && vite build && tsc -p tsconfig.electron.json",
+    "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:publish": "npm run build && electron-builder --win portable"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "better-sqlite3": "^12.2.0",
+    "bcryptjs": "^3.0.2",
+    "drizzle-orm": "^0.44.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "@types/node": "^24.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0",
+    "eslint": "^9.0.0",
+    "@eslint/js": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.0.0"
+  },
+  "build": {
+    "appId": "com.practiceanalytics.desktop",
+    "productName": "Practice Analytics",
+    "directories": {
+      "output": "Published"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": ["portable", "nsis"]
+    }
+  }
+}
