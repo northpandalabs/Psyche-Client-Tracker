@@ -1,0 +1,139 @@
+Practice Analytics -- Privacy Policy
+
+Effective date: 2026-08-23
+Last updated: 2026-08-23
+
+------------------------------------------------------------------------
+SHORT VERSION
+------------------------------------------------------------------------
+
+Practice Analytics stores all data exclusively on your local device.
+NorthPanda Labs collects no personal information, no practice data, and
+no analytics. The only outbound network activity is an optional daily
+check for software updates via a public GitHub file.
+
+------------------------------------------------------------------------
+1. WHO WE ARE
+------------------------------------------------------------------------
+
+"NorthPanda Labs" is the individual developer of Practice Analytics.
+
+Contact: bheck756@gmail.com
+GitHub:  https://github.com/northpandalabs/Psyche-Client-Tracker
+
+------------------------------------------------------------------------
+2. WHAT WE DO NOT COLLECT
+------------------------------------------------------------------------
+
+NorthPanda Labs does NOT collect, transmit, or store on any server:
+
+  - Practice data (visit counts, financial totals, scheduling figures,
+    business notes, or any other data you enter into the Software)
+  - Passwords or password hashes
+  - Device identifiers or hardware fingerprints
+  - Usage statistics, feature tracking, or behavioral analytics
+  - Crash reports or error logs
+  - Cookies, tracking pixels, or advertising identifiers
+  - Information about your patients, clients, or business contacts
+
+There are no analytics SDKs, no telemetry frameworks, and no
+third-party tracking libraries embedded in this Software.
+
+------------------------------------------------------------------------
+3. DATA STORED ON YOUR DEVICE
+------------------------------------------------------------------------
+
+All data you enter into Practice Analytics is stored exclusively in a
+SQLite database on your local Windows device at:
+
+  %APPDATA%\practice-analytics-desktop\practice-analytics.sqlite
+
+The database is protected by a password that only you know. The
+password itself is never stored -- only a bcrypt hash (work factor 12)
+is written to disk. NorthPanda Labs has no access to this file and
+cannot assist with data recovery if you forget your password.
+
+Backups you create and CSV exports you generate are saved only to
+destinations you choose on your own device. These files are never
+transmitted to NorthPanda Labs or any third party.
+
+------------------------------------------------------------------------
+4. SOFTWARE UPDATE CHECKS
+------------------------------------------------------------------------
+
+Practice Analytics periodically checks for available updates by
+fetching a publicly accessible JSON file from GitHub:
+
+  https://raw.githubusercontent.com/northpandalabs/Psyche-Client-Tracker
+  /refs/heads/main/legal/downloads.json
+
+Each update check:
+
+  - Sends only standard HTTPS request headers and the User-Agent string
+    "practice-analytics-updater"
+  - Does not include your practice data, password, or any identifying
+    information
+  - Occurs approximately once per day (first check 30 seconds after
+    launch, then daily near noon local time)
+  - Is subject to GitHub's Privacy Policy:
+    https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement
+
+You may block this request using Windows Firewall or network controls.
+The Software will continue to function fully without network access;
+you will simply not receive update notifications.
+
+------------------------------------------------------------------------
+5. CHILDREN'S PRIVACY
+------------------------------------------------------------------------
+
+Practice Analytics is intended for use by licensed healthcare
+professionals and is not directed at children under the age of 13.
+NorthPanda Labs does not knowingly collect any information from
+children.
+
+------------------------------------------------------------------------
+6. DATA SECURITY
+------------------------------------------------------------------------
+
+  - Your practice data is protected by a local password of your choice.
+  - Passwords are stored only as bcrypt hashes; the plaintext is never
+    written to disk or transmitted.
+  - If you lose your password, your local data cannot be recovered by
+    NorthPanda Labs or anyone else.
+  - Maintain regular backups using the Software's Backup feature and
+    keep your Windows device secure.
+
+------------------------------------------------------------------------
+7. YOUR DATA RIGHTS
+------------------------------------------------------------------------
+
+Because all your data lives exclusively on your device, you have
+complete control:
+
+  View data:    Use the Export CSV feature inside the Software.
+  Back up data: Use the Backup / Restore feature inside the Software.
+  Delete data:  Uninstall the Software and delete the folder at
+                %APPDATA%\practice-analytics-desktop\
+
+NorthPanda Labs holds no copy of your data. We cannot provide, share,
+or delete it on your behalf.
+
+------------------------------------------------------------------------
+8. CHANGES TO THIS POLICY
+------------------------------------------------------------------------
+
+If we make material changes to this Privacy Policy, we will update the
+"Last updated" date above and include the revised policy in a new
+release of the Software. Continued use of Practice Analytics after a
+policy change constitutes acceptance of the updated policy.
+
+------------------------------------------------------------------------
+9. CONTACT
+------------------------------------------------------------------------
+
+For privacy questions, concerns, or requests:
+
+  Email:  bheck756@gmail.com
+  GitHub: https://github.com/northpandalabs/Psyche-Client-Tracker
+
+------------------------------------------------------------------------

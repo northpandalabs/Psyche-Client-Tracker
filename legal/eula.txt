@@ -1,0 +1,173 @@
+Practice Analytics -- End-User License Agreement (EULA)
+
+Effective date: 2026-08-23
+Last updated: 2026-08-23
+
+Please read this Agreement carefully before installing or using
+Practice Analytics ("the Software"). By installing or using the
+Software you agree to be bound by these terms. If you do not agree,
+do not install or use the Software.
+
+------------------------------------------------------------------------
+1. PARTIES
+------------------------------------------------------------------------
+
+"NorthPanda Labs" (or "we", "us", "our") refers to the individual
+developer operating under that name.
+Contact: bheck756@gmail.com
+GitHub:  https://github.com/northpandalabs/Psyche-Client-Tracker
+
+"You" or "User" means the individual installing or using Practice
+Analytics for the management of their own professional practice.
+
+------------------------------------------------------------------------
+2. LICENSE GRANT
+------------------------------------------------------------------------
+
+NorthPanda Labs grants you a limited, non-exclusive, non-transferable,
+revocable license to install and use Practice Analytics on Windows
+computers you own or control, solely for tracking aggregate statistics
+of your own professional practice. No purchase or subscription is
+required.
+
+------------------------------------------------------------------------
+3. RESTRICTIONS
+------------------------------------------------------------------------
+
+You may not:
+
+a) Distribute, sublicense, sell, rent, lease, or transfer the Software
+   or any copy of it to another person or entity;
+b) Modify, adapt, translate, reverse-engineer, decompile, disassemble,
+   or create derivative works based on the Software;
+c) Remove, alter, or obscure any copyright, trademark, or other
+   proprietary notices contained in the Software;
+d) Use the Software as a basis for building a competing product or
+   service.
+
+------------------------------------------------------------------------
+4. IMPORTANT HEALTHCARE DATA WARNING
+------------------------------------------------------------------------
+
+Practice Analytics is designed exclusively for AGGREGATE business
+statistics: visit counts, financial totals, scheduling summaries, and
+similar business metrics. It is NOT designed or intended to store,
+process, or transmit protected health information (PHI) as defined
+under HIPAA, HITECH, or any applicable state or federal privacy law.
+
+YOU MUST NOT ENTER ANY OF THE FOLLOWING INTO PRACTICE ANALYTICS:
+
+  - Patient names, initials, or identifiers
+  - Dates of birth or other demographic data
+  - Diagnosis codes (ICD, DSM, or otherwise)
+  - Procedure codes (CPT or otherwise) tied to individual patients
+  - Treatment notes, progress notes, or clinical narratives
+  - Insurance member IDs or claim-level data
+  - Any other information that could identify a specific individual
+
+Practice Analytics is not a covered entity, business associate, or
+HIPAA-compliant system. NorthPanda Labs does not provide a Business
+Associate Agreement (BAA). Do not use Practice Analytics as a
+substitute for a compliant electronic health record (EHR), billing
+platform, or practice management system.
+
+YOU ARE SOLELY RESPONSIBLE FOR YOUR OWN HIPAA AND REGULATORY
+COMPLIANCE. NorthPanda Labs SHALL HAVE NO LIABILITY FOR YOUR FAILURE
+TO COMPLY WITH APPLICABLE LAW.
+
+------------------------------------------------------------------------
+5. NO WARRANTY
+------------------------------------------------------------------------
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY
+OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+ACCURACY, RELIABILITY, AND NON-INFRINGEMENT. YOUR USE OF THE SOFTWARE
+IS ENTIRELY AT YOUR OWN RISK.
+
+NorthPanda Labs does not warrant that the Software will meet your
+requirements, operate without interruption or error, or that any
+defects will be corrected.
+
+------------------------------------------------------------------------
+6. LIMITATION OF LIABILITY
+------------------------------------------------------------------------
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL
+NORTHPANDA LABS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
+CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR DAMAGES FOR LOSS OF
+PROFITS, REVENUE, DATA, GOODWILL, OR BUSINESS, EVEN IF NORTHPANDA LABS
+HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+NORTHPANDA LABS' TOTAL CUMULATIVE LIABILITY TO YOU FOR ALL CLAIMS
+ARISING OUT OF OR RELATING TO THIS AGREEMENT OR THE SOFTWARE,
+REGARDLESS OF THE FORM OF ACTION, SHALL NOT EXCEED $10 USD.
+
+------------------------------------------------------------------------
+7. PROFESSIONAL ADVICE DISCLAIMER
+------------------------------------------------------------------------
+
+Practice Analytics provides mathematical calculations and estimates for
+business planning purposes only. Nothing in the Software or its output
+constitutes legal, medical, financial, billing, compliance, clinical,
+or professional advice of any kind. You should consult qualified
+professionals before making decisions in any of those areas.
+
+The Software's forecasts and planning estimates are approximations
+based on your own input data. They are not guarantees of future
+performance or outcomes.
+
+------------------------------------------------------------------------
+8. UPDATES
+------------------------------------------------------------------------
+
+NorthPanda Labs may release updated versions of Practice Analytics.
+The Software may notify you when a newer version is available; you are
+not required to update. Updated versions are subject to this Agreement
+unless accompanied by a superseding agreement.
+
+------------------------------------------------------------------------
+9. OPEN SOURCE COMPONENTS
+------------------------------------------------------------------------
+
+Practice Analytics incorporates open source software components
+distributed under their respective licenses (MIT, Apache 2.0, etc.).
+A full list of components and their license notices is available in the
+Software's package.json and the accompanying source repository.
+
+------------------------------------------------------------------------
+10. TERMINATION
+------------------------------------------------------------------------
+
+This Agreement is effective from the date you install the Software
+until terminated. It terminates automatically and without notice if you
+violate any provision of this Agreement. Upon termination you must
+uninstall the Software and destroy all copies in your possession.
+
+------------------------------------------------------------------------
+11. GOVERNING LAW AND DISPUTE RESOLUTION
+------------------------------------------------------------------------
+
+This Agreement is governed by the laws of the State of Wyoming, USA,
+without regard to its conflict-of-law provisions.
+
+Any dispute arising out of or relating to this Agreement or the
+Software shall be resolved by binding individual arbitration. You agree
+to waive any right to participate in a class action lawsuit or
+class-wide arbitration relating to the Software.
+
+------------------------------------------------------------------------
+12. ENTIRE AGREEMENT
+------------------------------------------------------------------------
+
+This Agreement, together with the Privacy Policy, constitutes the
+entire agreement between you and NorthPanda Labs with respect to
+Practice Analytics and supersedes all prior and contemporaneous
+understandings, agreements, and representations on that subject.
+
+If any provision of this Agreement is held unenforceable, the remaining
+provisions shall continue in full force and effect.
+
+------------------------------------------------------------------------
+
+Questions? Contact bheck756@gmail.com

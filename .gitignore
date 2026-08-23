@@ -69,4 +69,9 @@ $RECYCLE.BIN/
 
 # Built Visual Studio Code Extensions
 *.vsix
+# Release binaries -- entirely gitignored, build_info.json lives in legal/
+Releases/
+# electron-builder debug files (sometimes left in Releases/)
+builder-debug.yml
+builder-effective-config.yaml
 practice-analytics-codex/Published

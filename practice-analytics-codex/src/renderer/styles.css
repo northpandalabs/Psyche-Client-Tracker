@@ -21,3 +21,5 @@
 .metrics .metric-warn{border-left-color:#e5a43b}
 .metrics .metric-warn strong{color:#8b4b13}
 @media(max-width:900px){.dash-hero{flex-direction:column}.goal-block{text-align:left;min-width:0;width:100%}.dash-charts{grid-template-columns:1fr}}
+.update-banner{background:#fff8e6;border:1px solid #e5a43b;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px}.update-banner span{flex:1;font-size:.9rem;color:#6b4209;font-weight:500}
+.about-page{display:grid;gap:16px;max-width:600px}.about-card{}.about-head{display:flex;align-items:center;gap:16px;margin-bottom:4px}.about-head h3{margin:2px 0}.about-section-head{margin:0 0 14px;font-size:.95rem;color:#17251f}

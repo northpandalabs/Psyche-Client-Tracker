@@ -20,11 +20,12 @@
     }
     ,
     {
-      "label": "Publish Exe",
+      "label": "Build Release Installer",
+      "detail": "Builds NSIS installer -> Releases/{version}a{n}/Practice.Analytics.Setup.{version}.exe",
       "type": "shell",
-      "command": "Set-Location '${workspaceFolder}/practice-analytics-codex'; npm run dist:publish",
+      "command": "node '${workspaceFolder}/scripts/build-release.js'",
       "options": {
-        "cwd": "${workspaceFolder}/practice-analytics-codex"
+        "cwd": "${workspaceFolder}"
       },
       "presentation": {
         "reveal": "always",

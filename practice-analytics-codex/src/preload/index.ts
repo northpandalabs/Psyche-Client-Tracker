@@ -23,6 +23,21 @@ const api = {
   },
   exportCsv: (): Promise<boolean> => ipcRenderer.invoke("export:csv"),
   createBackup: (): Promise<boolean> => ipcRenderer.invoke("backup:create"),
+  update: {
+    check: (): Promise<{ version: string; url: string } | null> =>
+      ipcRenderer.invoke("update:check"),
+    status: (): Promise<{ version: string; url: string } | null> =>
+      ipcRenderer.invoke("update:status"),
+    openReleases: (): Promise<void> =>
+      ipcRenderer.invoke("update:open-releases"),
+  },
+  app: {
+    version: (): Promise<string> => ipcRenderer.invoke("app:version"),
+  },
+  legal: {
+    openEula: (): Promise<void> => ipcRenderer.invoke("legal:open-eula"),
+    openPrivacy: (): Promise<void> => ipcRenderer.invoke("legal:open-privacy"),
+  },
 };
 
 export type PracticeApi = typeof api;

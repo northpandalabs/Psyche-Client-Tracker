@@ -1,0 +1,52 @@
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: practice-analytics-codex/package-lock.json
+
+      - name: Install dependencies
+        working-directory: practice-analytics-codex
+        run: npm ci
+
+      - name: Validate tag matches package.json version
+        shell: pwsh
+        working-directory: practice-analytics-codex
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart("v")
+          $pkg = (Get-Content package.json | ConvertFrom-Json).version
+          if ($tag -ne $pkg) {
+            Write-Error "Tag $tag does not match package.json version $pkg -- run scripts/set-version.js first."
+            exit 1
+          }
+          Write-Host "Version $tag confirmed."
+
+      - name: Run tests
+        working-directory: practice-analytics-codex
+        run: npm test
+
+      - name: Build Windows NSIS installer
+        working-directory: practice-analytics-codex
+        run: npm run dist:win
+
+      - name: Upload installer to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Releases/*.exe
+          generate_release_notes: true
