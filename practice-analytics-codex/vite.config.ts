@@ -6,5 +6,8 @@ export default defineConfig({
   base: "./",
   build: {
     outDir: "dist"
+  },
+  test: {
+    exclude: ["e2e/**", "dist-electron/**", "node_modules/**"]
   }
 });
