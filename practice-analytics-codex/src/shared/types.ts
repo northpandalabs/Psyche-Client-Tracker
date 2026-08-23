@@ -15,6 +15,7 @@ export interface Settings {
   monthlyNewPatientGoal: number; weeklyRevenueGoalCents: number; monthlyRevenueGoalCents: number;
   annualRevenueGoalCents: number; forecastLookbackWeeks: number; inactivityLockMinutes: number;
   theme: "light" | "dark" | "system"; visitValues: Record<VisitCode, number>;
+  showTopBar: boolean;
 }
 
 export interface Summary {

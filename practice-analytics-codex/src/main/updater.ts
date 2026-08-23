@@ -3,9 +3,15 @@ import { app } from "electron";
 
 const DOWNLOADS_URL =
   "https://raw.githubusercontent.com/northpandalabs/Psyche-Client-Tracker/refs/heads/main/legal/downloads.json";
-const RELEASES_PAGE =
+const RELEASES_FALLBACK =
   "https://github.com/northpandalabs/Psyche-Client-Tracker/releases/latest";
 const INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+interface DownloadsJson {
+  version: string;
+  base_download_url?: string;
+  platforms?: { windows?: { filename_template?: string } };
+}
 
 export interface UpdateInfo {
   version: string;
@@ -26,7 +32,7 @@ function semverGt(a: string, b: string): boolean {
   return false;
 }
 
-function fetchDownloads(): Promise<{ version: string }> {
+function fetchDownloads(): Promise<DownloadsJson> {
   return new Promise((resolve, reject) => {
     const req = https.get(
       DOWNLOADS_URL,
@@ -42,7 +48,7 @@ function fetchDownloads(): Promise<{ version: string }> {
         });
         res.on("end", () => {
           try {
-            resolve(JSON.parse(body) as { version: string });
+            resolve(JSON.parse(body) as DownloadsJson);
           } catch {
             reject(new Error("invalid json"));
           }
@@ -70,7 +76,10 @@ export async function checkNow(): Promise<UpdateInfo | null> {
     const data = await fetchDownloads();
     if (!/^\d+\.\d+\.\d+$/.test(data.version)) return cachedUpdate;
     if (semverGt(data.version, app.getVersion())) {
-      cachedUpdate = { version: data.version, url: RELEASES_PAGE };
+      const base = data.base_download_url ?? RELEASES_FALLBACK;
+      const template = data.platforms?.windows?.filename_template ?? "Practice.Analytics.Setup.{version}.exe";
+      const filename = template.replace("{version}", data.version);
+      cachedUpdate = { version: data.version, url: `${base}/${filename}` };
     }
     return cachedUpdate;
   } catch {

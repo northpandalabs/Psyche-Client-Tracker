@@ -23,6 +23,7 @@ export const settingsSchema = z.object({
   monthlyRevenueGoalCents: money, annualRevenueGoalCents: money, forecastLookbackWeeks: z.number().int().min(4).max(104),
   inactivityLockMinutes: z.number().int().min(1).max(1440), theme: z.enum(["light", "dark", "system"]),
   visitValues: z.object({ new_psych_eval: money, followup_med: money, therapy_med: money, therapy_only: money, other: money }),
+  showTopBar: z.boolean(),
 });
 
 export const passwordSchema = z.string().min(10).max(128);

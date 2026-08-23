@@ -1,8 +1,8 @@
 {
   "version": "0.1.0",
-  "alpha_counter": 1,
+  "alpha_counter": 2,
   "build_date": "2026-08-23",
   "artifacts": {
-    "windows_installer": "0.1.0a1/Practice.Analytics.Setup.0.1.0.exe"
+    "windows_installer": "0.1.0a2/Practice.Analytics.Setup.0.1.0.exe"
   }
 }

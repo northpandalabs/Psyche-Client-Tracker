@@ -7,6 +7,7 @@ const defaultSettings: Settings = {
   monthlyNewPatientGoal: 20, weeklyRevenueGoalCents: 700000, monthlyRevenueGoalCents: 3000000,
   annualRevenueGoalCents: 36000000, forecastLookbackWeeks: 8, inactivityLockMinutes: 15, theme: "system",
   visitValues: { new_psych_eval: 35000, followup_med: 17500, therapy_med: 25000, therapy_only: 20000, other: 15000 },
+  showTopBar: true,
 };
 
 export class AppDatabase {
@@ -22,7 +23,7 @@ export class AppDatabase {
     this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(1,?)").run(now);
     this.db.prepare("INSERT OR IGNORE INTO app_settings(id,json,created_at,updated_at) VALUES(1,?,?,?)").run(JSON.stringify(defaultSettings), now, now);
   }
-  settings(): Settings { return JSON.parse((this.db.prepare("SELECT json FROM app_settings WHERE id=1").get() as {json:string}).json) as Settings; }
+  settings(): Settings { const raw=JSON.parse((this.db.prepare("SELECT json FROM app_settings WHERE id=1").get() as {json:string}).json); return {...defaultSettings,...raw} as Settings; }
   saveSettings(value: Settings) { this.db.prepare("UPDATE app_settings SET json=?,updated_at=? WHERE id=1").run(JSON.stringify(value), new Date().toISOString()); }
   passwordHash(): string | null { return (this.db.prepare("SELECT password_hash FROM app_settings WHERE id=1").get() as {password_hash:string|null}).password_hash; }
   setPasswordHash(hash: string) { this.db.prepare("UPDATE app_settings SET password_hash=?,updated_at=? WHERE id=1").run(hash,new Date().toISOString()); }

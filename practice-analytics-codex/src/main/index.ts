@@ -31,7 +31,7 @@ ipcMain.handle("export:csv",async()=>{requireUnlocked(unlocked);const result=awa
 ipcMain.handle("backup:create",async()=>{requireUnlocked(unlocked);const result=await dialog.showSaveDialog({defaultPath:`practice-analytics-${new Date().toISOString().slice(0,10)}.sqlite`,filters:[{name:"SQLite backup",extensions:["sqlite"]}]});if(result.canceled||!result.filePath)return false;await copyFile(path.join(app.getPath("userData"),"practice-analytics.sqlite"),result.filePath);return true;});
 ipcMain.handle("update:check",()=>checkNow());
 ipcMain.handle("update:status",()=>getUpdateStatus());
-ipcMain.handle("update:open-releases",()=>shell.openExternal("https://github.com/northpandalabs/Psyche-Client-Tracker/releases/latest"));
+ipcMain.handle("update:open-releases",()=>{const info=getUpdateStatus();return shell.openExternal(info?.url??"https://github.com/northpandalabs/Psyche-Client-Tracker/releases/latest");});
 ipcMain.handle("app:version",()=>app.getVersion());
 ipcMain.handle("legal:open-eula",()=>shell.openExternal("https://github.com/northpandalabs/Psyche-Client-Tracker/blob/main/legal/eula.txt"));
 ipcMain.handle("legal:open-privacy",()=>shell.openExternal("https://github.com/northpandalabs/Psyche-Client-Tracker/blob/main/legal/privacy.txt"));

@@ -14,7 +14,7 @@ do not install or use the Software.
 
 "NorthPanda Labs" (or "we", "us", "our") refers to the individual
 developer operating under that name.
-Contact: bheck756@gmail.com
+Contact: northpandalabs@gmail.com
 GitHub:  https://github.com/northpandalabs/Psyche-Client-Tracker
 
 "You" or "User" means the individual installing or using Practice
@@ -170,4 +170,4 @@ provisions shall continue in full force and effect.
 
 ------------------------------------------------------------------------
 
-Questions? Contact bheck756@gmail.com
+Questions? Contact northpandalabs@gmail.com
