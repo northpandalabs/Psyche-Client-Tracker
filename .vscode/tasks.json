@@ -33,6 +33,21 @@
         "clear": true
       },
       "group": "build"
+    },
+    {
+      "label": "Tag Alpha Release",
+      "detail": "Increments alpha counter, commits build_info.json, tags v{version}a{n}, pushes to GitHub -> triggers CI build",
+      "type": "shell",
+      "command": "node '${workspaceFolder}/scripts/tag-alpha.js'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build"
     }
   ]
 }

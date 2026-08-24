@@ -30,12 +30,13 @@ jobs:
         working-directory: practice-analytics-codex
         run: |
           $tag = "${{ github.ref_name }}".TrimStart("v")
+          $base = $tag -replace 'a\d+$', ''
           $pkg = (Get-Content package.json | ConvertFrom-Json).version
-          if ($tag -ne $pkg) {
-            Write-Error "Tag $tag does not match package.json version $pkg -- run scripts/set-version.js first."
+          if ($base -ne $pkg) {
+            Write-Error "Tag base version $base does not match package.json version $pkg -- run scripts/set-version.js first."
             exit 1
           }
-          Write-Host "Version $tag confirmed."
+          Write-Host "Version $pkg confirmed (tag: ${{ github.ref_name }})"
 
       - name: Run tests
         working-directory: practice-analytics-codex
@@ -50,3 +51,4 @@ jobs:
         with:
           files: Releases/*.exe
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, 'a') }}
