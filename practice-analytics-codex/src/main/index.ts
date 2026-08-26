@@ -20,8 +20,8 @@ function downloadInstaller(url: string, dest: string, onProgress: (pct: number) 
         const file = createWriteStream(dest);
         res.on("data", (chunk: Buffer) => { received += chunk.length; if (total > 0) onProgress(Math.round(received / total * 100)); });
         res.pipe(file);
-        file.on("finish", () => { file.close(); resolve(); });
-        file.on("error", reject);
+        file.on("finish", () => { file.close((err) => { if (err) reject(err); else resolve(); }); });
+        file.on("error", (err) => { file.close(); reject(err); });
       }).on("error", reject);
     };
     follow(url, 0);
@@ -66,8 +66,9 @@ ipcMain.handle("data:purge",()=>{requireUnlocked(unlocked);database.purgeData();
 ipcMain.handle("update:install",async(_e,url:string)=>{
   const dest=path.join(app.getPath("temp"),"PracticeAnalyticsUpdate.exe");
   await downloadInstaller(url,dest,pct=>{win?.webContents.send("update:progress",pct);});
-  await shell.openPath(dest);
-  setTimeout(()=>app.quit(),800);
+  const err=await shell.openPath(dest);
+  if(err) throw new Error(`Could not launch installer: ${err}`);
+  setTimeout(()=>app.quit(),2000);
   return true;
 });
 ipcMain.handle("update:check",()=>checkNow());
