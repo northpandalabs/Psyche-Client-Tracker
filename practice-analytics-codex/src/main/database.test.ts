@@ -127,7 +127,7 @@ describe("settings persistence", () => {
     const s = db.settings();
     const withoutMenuBar = { ...s } as Record<string, unknown>;
     delete withoutMenuBar["showMenuBar"];
-    db.saveSettings(withoutMenuBar as Settings);
+    db.saveSettings(withoutMenuBar as unknown as Settings);
     expect(db.settings().showMenuBar).toBe(false);
   });
 });
