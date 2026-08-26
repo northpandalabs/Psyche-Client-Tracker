@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import { createWriteStream, readFileSync } from "node:fs";
 import { copyFile, writeFile } from "node:fs/promises";
 import https from "node:https";
@@ -37,6 +37,7 @@ const requireUnlocked = (unlocked: boolean) => { if (!unlocked) throw new Error(
 let unlocked = false; let failures = 0;
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
   const dbPath=path.join(app.getPath("userData"),"practice-analytics.sqlite"); database=new AppDatabase(dbPath);
   const win=new BrowserWindow({width:1280,height:820,minWidth:900,minHeight:650,webPreferences:{preload:path.join(__dirname,"../preload/index.js"),contextIsolation:true,nodeIntegration:false,sandbox:true}});
   if(process.env.VITE_DEV_SERVER_URL) void win.loadURL(process.env.VITE_DEV_SERVER_URL); else void win.loadFile(path.join(__dirname,"../../dist/index.html"));
