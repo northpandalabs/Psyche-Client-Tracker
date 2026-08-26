@@ -33,6 +33,9 @@ const api = {
   },
   app: {
     version: (): Promise<string> => ipcRenderer.invoke("app:version"),
+    isPackaged: (): Promise<boolean> => ipcRenderer.invoke("app:is-packaged"),
+    buildInfo: (): Promise<{ version: string; alpha_counter?: number; build_date?: string } | null> =>
+      ipcRenderer.invoke("app:build-info"),
   },
   legal: {
     openEula: (): Promise<void> => ipcRenderer.invoke("legal:open-eula"),

@@ -92,9 +92,7 @@ export function getUpdateStatus(): UpdateInfo | null {
 }
 
 export function scheduleUpdateCheck(): void {
-  // First check 30 seconds after startup so the banner appears early.
-  setTimeout(() => void checkNow(), 30_000);
-  // Then check daily at the next noon, repeating every 24 hours.
+  void checkNow();
   setTimeout(() => {
     void checkNow();
     setInterval(() => void checkNow(), INTERVAL_MS);

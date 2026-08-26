@@ -52,6 +52,9 @@
       "dist-electron/**/*",
       "package.json"
     ],
+    "extraResources": [
+      { "from": "../legal/build_info.json", "to": "build_info.json" }
+    ],
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"

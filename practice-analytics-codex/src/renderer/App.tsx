@@ -21,7 +21,7 @@ export function App(){
  const [updateInfo,setUpdateInfo]=useState<{version:string;url:string}|null>(null); const [updateDismissed,setUpdateDismissed]=useState(false);
  const refresh=async()=>{if(api){setEntries(await api.entries.list());setSettings(await api.settings.get());}};
  useEffect(()=>{void api?.auth.status().then(setAuth)},[api]); useEffect(()=>{if(auth?.unlocked)void refresh()},[auth?.unlocked]);
- useEffect(()=>{if(!auth?.unlocked||!api)return;const poll=async()=>{const info=await api.update.status();if(info)setUpdateInfo(info);};void poll();const id=setInterval(()=>void poll(),2*60*1000);return()=>clearInterval(id);},[auth?.unlocked]);
+ useEffect(()=>{if(!auth?.unlocked||!api)return;void api.update.check().then(info=>{if(info)setUpdateInfo(info);});const id=setInterval(async()=>{const info=await api.update.status();if(info)setUpdateInfo(info);},2*60*1000);return()=>clearInterval(id);},[auth?.unlocked]);
  const authenticate=async()=>{try{setError("");if(!api)return;const ok=auth?.configured?await api.auth.unlock(password):await api.auth.setup(password);if(!ok)throw new Error("That password was not accepted.");setAuth({configured:true,unlocked:true});setPassword("");}catch(e){setError(e instanceof Error?e.message:"Unable to continue.");}};
  if(!auth)return <main className="center">Opening your local database…</main>;
  if(!auth.unlocked)return <main className="center"><section className="auth"><div className="logo"><LogoMark size={44}/></div><h1>{auth.configured?"Welcome back":"Set up Practice Analytics"}</h1><p>{auth.configured?"Enter your local password to unlock your data.":"Create a password of at least 10 characters. There is no email recovery."}</p><label>Password<input autoFocus type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")void authenticate()}}/></label>{error&&<p className="error" role="alert">{error}</p>}<button onClick={()=>void authenticate()}>{auth.configured?"Unlock":"Create password"}</button></section></main>;
@@ -45,13 +45,24 @@ function SettingsPage({value,save}:{value:Settings,save:(s:Settings)=>Promise<vo
 function Action({title,text,button,action}:{title:string,text:string,button:string,action:()=>unknown}){return <section className="panel"><h3>{title}</h3><p>{text}</p><button onClick={()=>void action()}>{button}</button></section>}
 function AboutPage({api,updateInfo:initial}:{api:typeof window.practiceApi,updateInfo:{version:string,url:string}|null}){
   const [ver,setVer]=useState("...");
+  const [buildInfo,setBuildInfo]=useState<{version:string,alpha_counter?:number,build_date?:string}|null>(null);
+  const [isPkg,setIsPkg]=useState<boolean|null>(null);
   const [upd,setUpd]=useState<{version:string,url:string}|null|false>(initial);
   const [busy,setBusy]=useState(false);
-  useEffect(()=>{void api?.app.version().then(setVer);},[]);
+  useEffect(()=>{
+    void api?.app.version().then(setVer);
+    void api?.app.buildInfo().then(info=>setBuildInfo(info??null));
+    void api?.app.isPackaged().then(setIsPkg);
+  },[]);
+  const fullVersion=buildInfo?.alpha_counter?`${ver}a${buildInfo.alpha_counter}`:ver;
+  const isDev=isPkg===false;
+  const isAlpha=isPkg===true&&(buildInfo?.alpha_counter??0)>0;
   const check=async()=>{setBusy(true);const r=await api?.update.check();setUpd(r??false);setBusy(false);};
   return <div className="about-page">
     <div className="panel about-card">
-      <div className="about-head"><div className="logo">PA</div><div><h3>Practice Analytics</h3><p className="eyebrow" style={{margin:"4px 0 0"}}>Version {ver}</p></div></div>
+      <div className="about-head"><div className="logo"><LogoMark size={44}/></div><div><h3>Practice Analytics</h3><p className="eyebrow" style={{margin:"4px 0 0"}}>Version {fullVersion}</p></div></div>
+      {isDev&&<p className="notice" style={{marginTop:12,fontSize:".82rem",background:"#fff8e6",color:"#6b4209",border:"1px solid #e5a43b"}}>Development build -- not for production use.</p>}
+      {isAlpha&&<p className="notice" style={{marginTop:12,fontSize:".82rem"}}>Alpha release -- features may change before the final release.</p>}
       <p style={{margin:"12px 0 0",fontSize:".9rem",color:"#405b52"}}>Local-first practice analytics for mental health professionals. All data stays on your device -- nothing is ever transmitted to a server.</p>
     </div>
     <div className="panel">

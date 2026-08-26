@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+import { readFileSync } from "node:fs";
 import { copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
@@ -33,5 +34,7 @@ ipcMain.handle("update:check",()=>checkNow());
 ipcMain.handle("update:status",()=>getUpdateStatus());
 ipcMain.handle("update:open-releases",()=>{const info=getUpdateStatus();return shell.openExternal(info?.url??"https://github.com/northpandalabs/Psyche-Client-Tracker/releases/latest");});
 ipcMain.handle("app:version",()=>app.getVersion());
+ipcMain.handle("app:is-packaged",()=>app.isPackaged);
+ipcMain.handle("app:build-info",()=>{try{const p=app.isPackaged?path.join(process.resourcesPath,"build_info.json"):path.join(__dirname,"../../../legal/build_info.json");return JSON.parse(readFileSync(p,"utf8"));}catch{return null;}});
 ipcMain.handle("legal:open-eula",()=>shell.openExternal("https://github.com/northpandalabs/Psyche-Client-Tracker/blob/main/legal/eula.txt"));
 ipcMain.handle("legal:open-privacy",()=>shell.openExternal("https://github.com/northpandalabs/Psyche-Client-Tracker/blob/main/legal/privacy.txt"));
