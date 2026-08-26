@@ -43,6 +43,7 @@
   "build": {
     "appId": "com.practiceanalytics.desktop",
     "productName": "Practice Analytics",
+    "icon": "build/icon.ico",
     "directories": {
       "output": "../Releases"
     },
@@ -52,11 +53,15 @@
       "package.json"
     ],
     "win": {
-      "target": ["portable", "nsis"]
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "artifactName": "Practice.Analytics.Setup.${version}.${ext}",
-      "license": "../legal/eula.txt"
+      "license": "../legal/eula.txt",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false
     }
   }
 }
