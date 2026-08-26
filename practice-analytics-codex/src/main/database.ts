@@ -7,7 +7,7 @@ const defaultSettings: Settings = {
   monthlyNewPatientGoal: 20, weeklyRevenueGoalCents: 700000, monthlyRevenueGoalCents: 3000000,
   annualRevenueGoalCents: 36000000, forecastLookbackWeeks: 8, inactivityLockMinutes: 15, theme: "system",
   visitValues: { new_psych_eval: 35000, followup_med: 17500, therapy_med: 25000, therapy_only: 20000, other: 15000 },
-  showTopBar: true,
+  showTopBar: false,
 };
 
 export class AppDatabase {
@@ -40,6 +40,13 @@ export class AppDatabase {
     const counts=this.db.prepare("SELECT code,count FROM daily_visit_counts WHERE daily_stats_id=?");
     return rows.map(r=>{const visits={new_psych_eval:0,followup_med:0,therapy_med:0,therapy_only:0,other:0}; for(const v of counts.all(r.id) as {code:VisitCode,count:number}[]) visits[v.code]=v.count;
       return {date:String(r.date),scheduledCount:Number(r.scheduled_count),cancellationCount:Number(r.cancellation_count),noShowCount:Number(r.no_show_count),visits,grossBilledCents:Number(r.gross_billed_cents),expectedAllowedCents:Number(r.expected_allowed_cents),insurancePaidCents:Number(r.insurance_paid_cents),patientPaidCents:Number(r.patient_paid_cents),otherPaidCents:Number(r.other_paid_cents),adjustmentsCents:Number(r.adjustments_cents),refundsCents:Number(r.refunds_cents),businessNote:String(r.business_note)};});
+  }
+  purgeData() {
+    const now = new Date().toISOString();
+    this.db.transaction(() => {
+      this.db.exec("DELETE FROM daily_stats");
+      this.db.prepare("UPDATE app_settings SET json=?,updated_at=? WHERE id=1").run(JSON.stringify(defaultSettings), now);
+    })();
   }
   close(){this.db.close();}
 }

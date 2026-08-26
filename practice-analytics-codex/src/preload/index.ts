@@ -23,6 +23,9 @@ const api = {
   },
   exportCsv: (): Promise<boolean> => ipcRenderer.invoke("export:csv"),
   createBackup: (): Promise<boolean> => ipcRenderer.invoke("backup:create"),
+  data: {
+    purge: (): Promise<boolean> => ipcRenderer.invoke("data:purge"),
+  },
   update: {
     check: (): Promise<{ version: string; url: string } | null> =>
       ipcRenderer.invoke("update:check"),
