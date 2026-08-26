@@ -164,6 +164,65 @@ describe("settingsSchema -- invalid input", () => {
   });
 });
 
+describe("dailyEntrySchema -- refund validation", () => {
+  it("rejects refunds exceeding total payments", () => {
+    // 80000+20000+5000 = 105000 total payments; refundsCents 110000 > 105000
+    const over = { ...validEntry, refundsCents: 110000 };
+    const result = dailyEntrySchema.safeParse(over);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain("Refunds cannot exceed");
+    }
+  });
+
+  it("accepts refunds exactly equal to total payments", () => {
+    // 80000+20000+5000 = 105000; refundsCents = 105000 is valid
+    expect(dailyEntrySchema.safeParse({ ...validEntry, refundsCents: 105000 }).success).toBe(true);
+  });
+
+  it("accepts zero refunds when no payments have been made", () => {
+    const noPayments = {
+      ...validEntry,
+      insurancePaidCents: 0, patientPaidCents: 0, otherPaidCents: 0, refundsCents: 0,
+    };
+    expect(dailyEntrySchema.safeParse(noPayments).success).toBe(true);
+  });
+});
+
+describe("settingsSchema -- visitValues validation", () => {
+  it("rejects visitValues with a zero entry (min(1) required)", () => {
+    const zero = { ...validSettings, visitValues: { ...validSettings.visitValues, followup_med: 0 } };
+    expect(settingsSchema.safeParse(zero).success).toBe(false);
+  });
+
+  it("accepts visitValues all set to 1 (minimum allowed)", () => {
+    const min = { ...validSettings, visitValues: { new_psych_eval: 1, followup_med: 1, therapy_med: 1, therapy_only: 1, other: 1 } };
+    expect(settingsSchema.safeParse(min).success).toBe(true);
+  });
+});
+
+describe("settingsSchema -- duplicate weekdays", () => {
+  it("rejects enabledWeekdays with duplicates", () => {
+    const dup = { ...validSettings, enabledWeekdays: [1, 2, 2, 3] };
+    const result = settingsSchema.safeParse(dup);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain("duplicates");
+    }
+  });
+
+  it("accepts weekdays with no duplicates", () => {
+    expect(settingsSchema.safeParse({ ...validSettings, enabledWeekdays: [1, 3, 5] }).success).toBe(true);
+  });
+});
+
+describe("dailyEntrySchema -- business note trim", () => {
+  it("accepts an empty business note after trim (blank is allowed)", () => {
+    // trim() runs before max(300) so whitespace-only is trimmed to "" which is valid (no min constraint)
+    expect(dailyEntrySchema.safeParse({ ...validEntry, businessNote: "   " }).success).toBe(true);
+  });
+});
+
 describe("passwordSchema", () => {
   it("accepts a password of exactly 10 characters", () => {
     expect(passwordSchema.safeParse("1234567890").success).toBe(true);

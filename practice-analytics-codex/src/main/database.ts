@@ -33,7 +33,8 @@ export class AppDatabase {
     this.db.prepare(`INSERT INTO daily_stats(date,scheduled_count,cancellation_count,no_show_count,gross_billed_cents,expected_allowed_cents,insurance_paid_cents,patient_paid_cents,other_paid_cents,adjustments_cents,refunds_cents,business_note,created_at,updated_at) VALUES(@date,@scheduled,@cancel,@noShow,@gross,@expected,@insurance,@patient,@other,@adjustments,@refunds,@note,@now,@now)
       ON CONFLICT(date) DO UPDATE SET scheduled_count=@scheduled,cancellation_count=@cancel,no_show_count=@noShow,gross_billed_cents=@gross,expected_allowed_cents=@expected,insurance_paid_cents=@insurance,patient_paid_cents=@patient,other_paid_cents=@other,adjustments_cents=@adjustments,refunds_cents=@refunds,business_note=@note,updated_at=@now`).run({date:entry.date,scheduled:entry.scheduledCount,cancel:entry.cancellationCount,noShow:entry.noShowCount,gross:entry.grossBilledCents,expected:entry.expectedAllowedCents,insurance:entry.insurancePaidCents,patient:entry.patientPaidCents,other:entry.otherPaidCents,adjustments:entry.adjustmentsCents,refunds:entry.refundsCents,note:entry.businessNote,now});
     const id=(this.db.prepare("SELECT id FROM daily_stats WHERE date=?").get(entry.date) as {id:number}).id;
-    const stmt=this.db.prepare("INSERT INTO daily_visit_counts(daily_stats_id,code,count) VALUES(?,?,?) ON CONFLICT(daily_stats_id,code) DO UPDATE SET count=excluded.count");
+    this.db.prepare("DELETE FROM daily_visit_counts WHERE daily_stats_id=?").run(id);
+    const stmt=this.db.prepare("INSERT INTO daily_visit_counts(daily_stats_id,code,count) VALUES(?,?,?)");
     for(const [code,count] of Object.entries(entry.visits)) stmt.run(id,code,count);
   })(); }
   entries(from?: string, to?: string): DailyEntry[] {

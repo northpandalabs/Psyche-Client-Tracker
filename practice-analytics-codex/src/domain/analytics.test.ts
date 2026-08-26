@@ -131,4 +131,26 @@ describe("planner", () => {
     const p = planner(0, 0, [], { ...settings, targetClinicalDaysPerWeek: 4, maxCompletedVisitsPerDay: 8 });
     expect(p.weeklyCapacity).toBe(32);
   });
+
+  it("does not divide by zero when historical average rounds to 0", () => {
+    // 10 entries × 1 completed = 10 total; current = 1 cent
+    // historical = 1/10 = 0.1 (truthy) => Math.round(0.1) = 0
+    // visitsRequired(gap, 0) must return null -- no division by zero
+    const tiny = { ...entry, scheduledCount: 2, cancellationCount: 0, noShowCount: 0,
+      visits: { new_psych_eval: 0, followup_med: 0, therapy_med: 0, therapy_only: 1, other: 0 } };
+    const entries10 = Array.from({ length: 10 }, (_, i) =>
+      ({ ...tiny, date: `2026-08-${String(i + 1).padStart(2, "0")}` })
+    );
+    const p = planner(100000, 1, entries10, settings);
+    expect(p.averageCents).toBe(0);
+    expect(p.visitsNeeded).toBeNull();
+    expect(p.feasible).toBe(false);
+    expect(() => planner(100000, 1, entries10, settings)).not.toThrow();
+  });
+
+  it("handles maxCompletedVisitsPerDay of 0 without throwing", () => {
+    const p = planner(100000, 0, [entry], { ...settings, maxCompletedVisitsPerDay: 0 });
+    expect(p.weeklyCapacity).toBe(0);
+    expect(() => planner(100000, 0, [entry], { ...settings, maxCompletedVisitsPerDay: 0 })).not.toThrow();
+  });
 });

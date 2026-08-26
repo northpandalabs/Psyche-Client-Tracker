@@ -143,6 +143,41 @@ describe("password hash", () => {
   });
 });
 
+describe("upsert visit-count integrity", () => {
+  it("leaves no orphan rows after updating an entry to remove a visit type", () => {
+    // Save with new_psych_eval=3, then update with new_psych_eval=0
+    db.saveEntry(makeEntry("2026-08-01", {
+      scheduledCount: 5,
+      visits: { new_psych_eval: 3, followup_med: 0, therapy_med: 0, therapy_only: 0, other: 0 },
+    }));
+    db.saveEntry(makeEntry("2026-08-01", {
+      scheduledCount: 5,
+      visits: { new_psych_eval: 0, followup_med: 2, therapy_med: 0, therapy_only: 0, other: 0 },
+    }));
+    const rows = db.entries();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].visits.new_psych_eval).toBe(0);
+    expect(rows[0].visits.followup_med).toBe(2);
+  });
+});
+
+describe("edge cases", () => {
+  it("saves and round-trips a business note of exactly 300 characters", () => {
+    const note = "x".repeat(300);
+    db.saveEntry(makeEntry("2026-08-01", { businessNote: note }));
+    expect(db.entries()[0].businessNote).toBe(note);
+  });
+
+  it("single-day date range returns only that day", () => {
+    db.saveEntry(makeEntry("2026-08-01"));
+    db.saveEntry(makeEntry("2026-08-02"));
+    db.saveEntry(makeEntry("2026-08-03"));
+    const rows = db.entries("2026-08-02", "2026-08-02");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].date).toBe("2026-08-02");
+  });
+});
+
 describe("purgeData", () => {
   it("removes all entries", () => {
     db.saveEntry(makeEntry("2026-08-01"));

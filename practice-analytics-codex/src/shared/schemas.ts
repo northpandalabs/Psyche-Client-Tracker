@@ -10,9 +10,11 @@ export const dailyEntrySchema = z.object({
   businessNote: z.string().trim().max(300),
 }).superRefine((value, context) => {
   const completed = Object.values(value.visits).reduce((sum, item) => sum + item, 0);
-  if (completed + value.cancellationCount + value.noShowCount > value.scheduledCount) {
+  if (completed + value.cancellationCount + value.noShowCount > value.scheduledCount)
     context.addIssue({ code: "custom", path: ["scheduledCount"], message: "Scheduled appointments must cover completed visits, cancellations, and no-shows." });
-  }
+  const totalPayments = value.insurancePaidCents + value.patientPaidCents + value.otherPaidCents;
+  if (value.refundsCents > totalPayments)
+    context.addIssue({ code: "custom", path: ["refundsCents"], message: "Refunds cannot exceed total payments received." });
 });
 
 export const settingsSchema = z.object({
@@ -22,9 +24,12 @@ export const settingsSchema = z.object({
   weeklyNewPatientGoal: count, monthlyNewPatientGoal: count, weeklyRevenueGoalCents: money,
   monthlyRevenueGoalCents: money, annualRevenueGoalCents: money, forecastLookbackWeeks: z.number().int().min(4).max(104),
   inactivityLockMinutes: z.number().int().min(1).max(1440), theme: z.enum(["light", "dark", "system"]),
-  visitValues: z.object({ new_psych_eval: money, followup_med: money, therapy_med: money, therapy_only: money, other: money }),
+  visitValues: z.object({ new_psych_eval: money.min(1), followup_med: money.min(1), therapy_med: money.min(1), therapy_only: money.min(1), other: money.min(1) }),
   showTopBar: z.boolean(),
   showMenuBar: z.boolean(),
+}).superRefine((value, ctx) => {
+  if (new Set(value.enabledWeekdays).size !== value.enabledWeekdays.length)
+    ctx.addIssue({ code: "custom", path: ["enabledWeekdays"], message: "Weekdays must not contain duplicates." });
 });
 
 export const passwordSchema = z.string().min(10).max(128);

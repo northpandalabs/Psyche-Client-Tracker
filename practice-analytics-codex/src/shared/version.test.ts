@@ -44,6 +44,26 @@ describe("semverGt -- major / minor / patch", () => {
   it("newer stable beats older alpha across minor", () => expect(semverGt("0.2.0", "0.1.0a5")).toBe(true));
 });
 
+describe("parseVer -- edge cases", () => {
+  it("parses versions with leading zeros (treated as decimal)", () => {
+    // "01.02.03" -- \d+ matches, Number("01") === 1, so same as "1.2.3"
+    expect(parseVer("01.02.03")).toEqual([1, 2, 3, Number.MAX_SAFE_INTEGER]);
+  });
+
+  it("rejects uppercase A suffix (case-sensitive regex)", () => {
+    // "0.1.0A5" does not match (?:a(\d+))? so the full string fails
+    expect(parseVer("0.1.0A5")).toEqual([-1, -1, -1, -1]);
+  });
+
+  it("rejects version strings with leading whitespace", () => {
+    expect(parseVer(" 0.1.0")).toEqual([-1, -1, -1, -1]);
+  });
+
+  it("rejects version strings with trailing whitespace", () => {
+    expect(parseVer("0.1.0 ")).toEqual([-1, -1, -1, -1]);
+  });
+});
+
 describe("semverGt -- malformed input", () => {
   it("malformed left side is not newer", () => expect(semverGt("bad", "0.1.0")).toBe(false));
   it("malformed right side is still beaten by valid version", () => expect(semverGt("0.1.0", "bad")).toBe(true));

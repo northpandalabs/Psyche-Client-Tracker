@@ -26,7 +26,7 @@ export function summarize(entries: DailyEntry[]): Summary {
 
 export function planner(goal: number, current: number, entries: DailyEntry[], settings: Settings) {
   const summary = summarize(entries); const historical = summary.completed >= 10 ? current / Math.max(summary.completed, 1) : 0;
-  const configured = Object.values(settings.visitValues).reduce((a, b) => a + b, 0) / 5;
+  const vv = Object.values(settings.visitValues); const configured = vv.length ? vv.reduce((a, b) => a + b, 0) / vv.length : 0;
   const average = Math.round(historical || configured); const gap = Math.max(goal - current, 0); const needed = visitsRequired(gap, average);
   const weeklyCapacity = capacity(settings.targetClinicalDaysPerWeek, settings.maxCompletedVisitsPerDay);
   return { gapCents: gap, averageCents: average, visitsNeeded: needed, weeklyCapacity, feasible: needed === null ? false : needed <= weeklyCapacity * 4.345 };

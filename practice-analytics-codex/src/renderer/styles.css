@@ -23,3 +23,27 @@
 @media(max-width:900px){.dash-hero{flex-direction:column}.goal-block{text-align:left;min-width:0;width:100%}.dash-charts{grid-template-columns:1fr}}
 .update-banner{background:#fff8e6;border:1px solid #e5a43b;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px}.update-banner span{flex:1;font-size:.9rem;color:#6b4209;font-weight:500}
 .about-page{display:grid;gap:16px;max-width:600px}.about-card{}.about-head{display:flex;align-items:center;gap:16px;margin-bottom:4px}.about-head h3{margin:2px 0}.about-section-head{margin:0 0 14px;font-size:.95rem;color:#17251f}
+html[data-theme="dark"]{color:#d8ede5;background:#0f1f18}
+html[data-theme="dark"] .cards article,html[data-theme="dark"] .panel,html[data-theme="dark"] .kpi-card{background:#162d22;border-color:#1e4030;box-shadow:none}
+html[data-theme="dark"] .auth{background:#162d22}
+html[data-theme="dark"] .auth input,html[data-theme="dark"] .form input,html[data-theme="dark"] .form textarea,html[data-theme="dark"] .form select,html[data-theme="dark"] .panel>label input{background:#0e1d16;border-color:#2a5040;color:#d8ede5}
+html[data-theme="dark"] .secondary{background:#0e2a1e;color:#7bc9af;border-color:#2a5040}
+html[data-theme="dark"] .notice{background:#0e2a1e;color:#d8ede5}
+html[data-theme="dark"] .error{background:#2a0d08;color:#f4a29a}
+html[data-theme="dark"] .update-banner{background:#2a1e00;border-color:#b07d1a}
+html[data-theme="dark"] .update-banner span{color:#e5c77a}
+html[data-theme="dark"] .eyebrow{color:#7bc9af}
+html[data-theme="dark"] .kpi-label,html[data-theme="dark"] .kpi-sub{color:#7bc9af}
+html[data-theme="dark"] .kpi-value{color:#d8ede5}
+html[data-theme="dark"] .chart-title,html[data-theme="dark"] h3,html[data-theme="dark"] h4{color:#d8ede5}
+html[data-theme="dark"] .about-section-head{color:#d8ede5}
+html[data-theme="dark"] .currency{border-color:#2a5040;background:#0e1d16}
+html[data-theme="dark"] .currency input{background:transparent;color:#d8ede5}
+html[data-theme="dark"] .form h4{border-color:#1e4030;color:#d8ede5}
+html[data-theme="dark"] .wide strong{color:#e5c77a}
+html[data-theme="dark"] .metrics p{border-left-color:#7bc9af;color:#d8ede5}
+html[data-theme="dark"] .trend-up{background:#0e2a1e;color:#7bc9af}
+html[data-theme="dark"] .trend-down{background:#2a0d08;color:#f4a29a}
+html[data-theme="dark"] .empty{color:#7bc9af}
+html[data-theme="dark"] select option{background:#162d22;color:#d8ede5}
+html[data-theme="dark"] .content{color:#d8ede5}
