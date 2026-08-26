@@ -8,6 +8,7 @@ const defaultSettings: Settings = {
   annualRevenueGoalCents: 36000000, forecastLookbackWeeks: 8, inactivityLockMinutes: 15, theme: "system",
   visitValues: { new_psych_eval: 35000, followup_med: 17500, therapy_med: 25000, therapy_only: 20000, other: 15000 },
   showTopBar: false,
+  showMenuBar: false,
 };
 
 export class AppDatabase {

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { createWriteStream, readFileSync } from "node:fs";
 import { copyFile, writeFile } from "node:fs/promises";
 import https from "node:https";
@@ -33,15 +33,16 @@ import { dailyEntrySchema, passwordSchema, settingsSchema } from "../shared/sche
 import { checkNow, getUpdateStatus, scheduleUpdateCheck } from "./updater.js";
 
 let database: AppDatabase;
+let win: BrowserWindow | null = null;
 const requireUnlocked = (unlocked: boolean) => { if (!unlocked) throw new Error("Application is locked."); };
 let unlocked = false; let failures = 0;
 
 app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
   const dbPath=path.join(app.getPath("userData"),"practice-analytics.sqlite"); database=new AppDatabase(dbPath);
-  const win=new BrowserWindow({width:1280,height:820,minWidth:900,minHeight:650,webPreferences:{preload:path.join(__dirname,"../preload/index.js"),contextIsolation:true,nodeIntegration:false,sandbox:true}});
+  win=new BrowserWindow({width:1280,height:820,minWidth:900,minHeight:650,webPreferences:{preload:path.join(__dirname,"../preload/index.js"),contextIsolation:true,nodeIntegration:false,sandbox:true}});
+  win.setMenuBarVisibility(database.settings().showMenuBar===true);
   if(process.env.VITE_DEV_SERVER_URL) void win.loadURL(process.env.VITE_DEV_SERVER_URL); else void win.loadFile(path.join(__dirname,"../../dist/index.html"));
-  win.on("closed",()=>database.close());
+  win.on("closed",()=>{database.close();win=null;});
   scheduleUpdateCheck();
 });
 app.on("window-all-closed",()=>app.quit());
@@ -51,7 +52,7 @@ ipcMain.handle("auth:setup",async(_e,payload:unknown)=>{if(database.passwordHash
 ipcMain.handle("auth:unlock",async(_e,payload:unknown)=>{if(failures>=5)await new Promise(r=>setTimeout(r,2000));const res=passwordSchema.safeParse(payload);if(!res.success)return false;unlocked=await bcrypt.compare(res.data,database.passwordHash()??"");failures=unlocked?0:failures+1;return unlocked;});
 ipcMain.handle("auth:lock",()=>{unlocked=false;return true;});
 ipcMain.handle("settings:get",()=>{requireUnlocked(unlocked);return database.settings();});
-ipcMain.handle("settings:save",(_e,payload:unknown)=>{requireUnlocked(unlocked);const value=settingsSchema.parse(payload);database.saveSettings(value);return value;});
+ipcMain.handle("settings:save",(_e,payload:unknown)=>{requireUnlocked(unlocked);const value=settingsSchema.parse(payload);database.saveSettings(value);win?.setMenuBarVisibility(value.showMenuBar===true);return value;});
 ipcMain.handle("entries:list",(_e,range:unknown)=>{requireUnlocked(unlocked);const parsed=(range??{}) as {from?:string,to?:string};return database.entries(parsed.from,parsed.to);});
 ipcMain.handle("entries:save",(_e,payload:unknown)=>{requireUnlocked(unlocked);const value=dailyEntrySchema.parse(payload);database.saveEntry(value);return value;});
 ipcMain.handle("export:csv",async()=>{requireUnlocked(unlocked);const result=await dialog.showSaveDialog({defaultPath:"practice-analytics.csv",filters:[{name:"CSV",extensions:["csv"]}]});if(result.canceled||!result.filePath)return false;const rows=database.entries();const header="date,scheduled,new_evaluations,followups,therapy_med,therapy_only,other,cancellations,no_shows,gross_billed_cents,expected_allowed_cents,insurance_paid_cents,patient_paid_cents,other_paid_cents,adjustments_cents,refunds_cents\n";const body=rows.map(x=>[x.date,x.scheduledCount,...Object.values(x.visits),x.cancellationCount,x.noShowCount,x.grossBilledCents,x.expectedAllowedCents,x.insurancePaidCents,x.patientPaidCents,x.otherPaidCents,x.adjustmentsCents,x.refundsCents].join(",")).join("\n");await writeFile(result.filePath,header+body,"utf8");return true;});
@@ -59,7 +60,6 @@ ipcMain.handle("backup:create",async()=>{requireUnlocked(unlocked);const result=
 ipcMain.handle("data:purge",()=>{requireUnlocked(unlocked);database.purgeData();return true;});
 ipcMain.handle("update:install",async(_e,url:string)=>{
   const dest=path.join(app.getPath("temp"),"PracticeAnalyticsUpdate.exe");
-  const win=BrowserWindow.getAllWindows()[0];
   await downloadInstaller(url,dest,pct=>{win?.webContents.send("update:progress",pct);});
   await shell.openPath(dest);
   setTimeout(()=>app.quit(),800);

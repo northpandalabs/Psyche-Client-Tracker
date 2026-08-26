@@ -16,6 +16,7 @@ export interface Settings {
   annualRevenueGoalCents: number; forecastLookbackWeeks: number; inactivityLockMinutes: number;
   theme: "light" | "dark" | "system"; visitValues: Record<VisitCode, number>;
   showTopBar: boolean;
+  showMenuBar: boolean;
 }
 
 export interface Summary {
