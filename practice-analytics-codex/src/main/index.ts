@@ -30,7 +30,7 @@ function downloadInstaller(url: string, dest: string, onProgress: (pct: number) 
 import bcrypt from "bcryptjs";
 import { AppDatabase } from "./database.js";
 import { dailyEntrySchema, passwordSchema, settingsSchema } from "../shared/schemas.js";
-import { checkNow, getUpdateStatus, scheduleUpdateCheck } from "./updater.js";
+import { checkNow, getUpdateStatus, scheduleUpdateCheck, setRunningVersion } from "./updater.js";
 
 let database: AppDatabase;
 let win: BrowserWindow | null = null;
@@ -41,6 +41,11 @@ app.whenReady().then(() => {
   const dbPath=path.join(app.getPath("userData"),"practice-analytics.sqlite"); database=new AppDatabase(dbPath);
   win=new BrowserWindow({width:1280,height:820,minWidth:900,minHeight:650,webPreferences:{preload:path.join(__dirname,"../preload/index.js"),contextIsolation:true,nodeIntegration:false,sandbox:true}});
   win.setMenuBarVisibility(database.settings().showMenuBar===true);
+  try {
+    const biPath=app.isPackaged?path.join(process.resourcesPath,"build_info.json"):path.join(__dirname,"../../../legal/build_info.json");
+    const bi=JSON.parse(readFileSync(biPath,"utf8")) as {version:string,alpha_counter?:number};
+    if(bi.alpha_counter) setRunningVersion(`${bi.version}a${bi.alpha_counter}`);
+  } catch { /* no build_info -- use app.getVersion() as-is */ }
   if(process.env.VITE_DEV_SERVER_URL) void win.loadURL(process.env.VITE_DEV_SERVER_URL); else void win.loadFile(path.join(__dirname,"../../dist/index.html"));
   win.on("closed",()=>{database.close();win=null;});
   scheduleUpdateCheck();

@@ -19,6 +19,11 @@ export interface UpdateInfo {
 }
 
 let cachedUpdate: UpdateInfo | null = null;
+let currentVersion: string = app.getVersion();
+
+export function setRunningVersion(v: string): void {
+  currentVersion = v;
+}
 
 function parseVer(v: string): number[] {
   const m = /^(\d+)\.(\d+)\.(\d+)(?:a(\d+))?$/.exec(v);
@@ -81,7 +86,7 @@ export async function checkNow(): Promise<UpdateInfo | null> {
   try {
     const data = await fetchDownloads();
     if (!/^\d+\.\d+\.\d+(?:a\d+)?$/.test(data.version)) return cachedUpdate;
-    if (semverGt(data.version, app.getVersion())) {
+    if (semverGt(data.version, currentVersion)) {
       const base = data.base_download_url ?? RELEASES_FALLBACK;
       const template = data.platforms?.windows?.filename_template ?? "Practice.Analytics.Setup.{version}.exe";
       const filename = template.replace("{version}", data.version);
