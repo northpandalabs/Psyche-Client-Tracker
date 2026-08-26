@@ -1,11 +1,11 @@
 {
-  "version": "0.1.0",
-  "released": "2026-08-23",
-  "base_download_url": "https://github.com/northpandalabs/Psyche-Client-Tracker/releases/latest/download",
+  "version": "0.1.0a8",
+  "released": "2026-08-26",
+  "base_download_url": "https://github.com/northpandalabs/Psyche-Client-Tracker/releases/download/v0.1.0a8",
   "github_url": "https://github.com/northpandalabs/Psyche-Client-Tracker",
   "platforms": {
     "windows": {
-      "filename_template": "Practice.Analytics.Setup.{version}.exe"
+      "filename_template": "Practice.Analytics.Setup.0.1.0.exe"
     }
   }
 }
