@@ -1,7 +1,32 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
-import { readFileSync } from "node:fs";
+import { createWriteStream, readFileSync } from "node:fs";
 import { copyFile, writeFile } from "node:fs/promises";
+import https from "node:https";
 import path from "node:path";
+
+function downloadInstaller(url: string, dest: string, onProgress: (pct: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const follow = (u: string, depth: number) => {
+      if (depth > 8) { reject(new Error("too many redirects")); return; }
+      https.get(u, { headers: { "User-Agent": "practice-analytics-updater" } }, (res) => {
+        if ((res.statusCode ?? 0) >= 300 && res.headers.location) {
+          res.resume();
+          follow(res.headers.location, depth + 1);
+          return;
+        }
+        if (res.statusCode !== 200) { reject(new Error(`HTTP ${res.statusCode}`)); return; }
+        const total = Number(res.headers["content-length"] ?? 0);
+        let received = 0;
+        const file = createWriteStream(dest);
+        res.on("data", (chunk: Buffer) => { received += chunk.length; if (total > 0) onProgress(Math.round(received / total * 100)); });
+        res.pipe(file);
+        file.on("finish", () => { file.close(); resolve(); });
+        file.on("error", reject);
+      }).on("error", reject);
+    };
+    follow(url, 0);
+  });
+}
 import bcrypt from "bcryptjs";
 import { AppDatabase } from "./database.js";
 import { dailyEntrySchema, passwordSchema, settingsSchema } from "../shared/schemas.js";
@@ -31,6 +56,14 @@ ipcMain.handle("entries:save",(_e,payload:unknown)=>{requireUnlocked(unlocked);c
 ipcMain.handle("export:csv",async()=>{requireUnlocked(unlocked);const result=await dialog.showSaveDialog({defaultPath:"practice-analytics.csv",filters:[{name:"CSV",extensions:["csv"]}]});if(result.canceled||!result.filePath)return false;const rows=database.entries();const header="date,scheduled,new_evaluations,followups,therapy_med,therapy_only,other,cancellations,no_shows,gross_billed_cents,expected_allowed_cents,insurance_paid_cents,patient_paid_cents,other_paid_cents,adjustments_cents,refunds_cents\n";const body=rows.map(x=>[x.date,x.scheduledCount,...Object.values(x.visits),x.cancellationCount,x.noShowCount,x.grossBilledCents,x.expectedAllowedCents,x.insurancePaidCents,x.patientPaidCents,x.otherPaidCents,x.adjustmentsCents,x.refundsCents].join(",")).join("\n");await writeFile(result.filePath,header+body,"utf8");return true;});
 ipcMain.handle("backup:create",async()=>{requireUnlocked(unlocked);const result=await dialog.showSaveDialog({defaultPath:`practice-analytics-${new Date().toISOString().slice(0,10)}.sqlite`,filters:[{name:"SQLite backup",extensions:["sqlite"]}]});if(result.canceled||!result.filePath)return false;await copyFile(path.join(app.getPath("userData"),"practice-analytics.sqlite"),result.filePath);return true;});
 ipcMain.handle("data:purge",()=>{requireUnlocked(unlocked);database.purgeData();return true;});
+ipcMain.handle("update:install",async(_e,url:string)=>{
+  const dest=path.join(app.getPath("temp"),"PracticeAnalyticsUpdate.exe");
+  const win=BrowserWindow.getAllWindows()[0];
+  await downloadInstaller(url,dest,pct=>{win?.webContents.send("update:progress",pct);});
+  await shell.openPath(dest);
+  setTimeout(()=>app.quit(),800);
+  return true;
+});
 ipcMain.handle("update:check",()=>checkNow());
 ipcMain.handle("update:status",()=>getUpdateStatus());
 ipcMain.handle("update:open-releases",()=>{const info=getUpdateStatus();return shell.openExternal(info?.url??"https://github.com/northpandalabs/Psyche-Client-Tracker/releases/latest");});

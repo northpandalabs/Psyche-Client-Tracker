@@ -30,7 +30,7 @@ export function App(){
  const chooseDate=(date:string)=>setEntry(entries.find(e=>e.date===date)??emptyEntry(date));
  const nav=["Dashboard","Daily Entry","Weekly / Monthly","Revenue Planner","Analytics","Import / Export","Backup / Restore","Settings","About"];
  return <div className="shell"><aside><div className="brand"><LogoMark size={36}/><h1>Practice<br/><span>Analytics</span></h1></div><nav>{nav.map(n=><button className={page===n?"active":""} onClick={()=>setPage(n)} key={n}>{n}</button>)}</nav><button className="lock" onClick={async()=>{await api?.auth.lock();setAuth({configured:true,unlocked:false})}}>Lock application</button></aside><main className="content">{settings.showTopBar!==false&&<header className="top"><div><p className="eyebrow">{settings.practiceName}</p><h2>{page}</h2></div><button className="secondary" onClick={()=>{setEntry(emptyEntry());setPage("Daily Entry")}}>+ Add daily entry</button></header>}{error&&<p className="error" role="alert">{error}</p>}
- {updateInfo&&!updateDismissed&&<div className="update-banner" role="status"><span>Version {updateInfo.version} is available.</span><button className="secondary" onClick={()=>void api?.update.openReleases()}>Download update</button><button className="secondary" onClick={()=>setUpdateDismissed(true)}>Dismiss</button></div>}
+ {updateInfo&&!updateDismissed&&<UpdateBanner info={updateInfo} api={api} onDismiss={()=>setUpdateDismissed(true)}/>}
  {page==="Dashboard"&&<Dashboard entries={entries} settings={settings}/>} {page==="Daily Entry"&&<EntryForm entry={entry} setEntry={setEntry} save={save} existing={entries.some(e=>e.date===entry.date)} chooseDate={chooseDate}/>} {page==="Weekly / Monthly"&&<Periods entries={entries}/>} {page==="Revenue Planner"&&<Planner entries={entries} settings={settings}/>} {page==="Analytics"&&<Analytics entries={entries} settings={settings}/>} {page==="Settings"&&<SettingsPage value={settings} save={async s=>{await api?.settings.save(s);setSettings(s)}}/>} {page==="About"&&<AboutPage api={api} updateInfo={updateInfo} onPurge={async()=>{await refresh();setSettings(await api?.settings.get() as Settings);setPage("Dashboard");}}/>} {page==="Import / Export"&&<Action title="Export aggregate data" text="Create a portable CSV of counts and financial totals. Business notes are excluded." button="Choose CSV destination" action={()=>api?.exportCsv()}/>} {page==="Backup / Restore"&&<Action title="Create a local backup" text="Choose a private destination and retain multiple dated backups." button="Create backup" action={()=>api?.createBackup()}/>}</main></div>;
 }
 
@@ -43,6 +43,27 @@ function Planner({entries,settings}:{entries:DailyEntry[],settings:Settings}){co
 function Analytics({entries,settings}:{entries:DailyEntry[],settings:Settings}){const s=summarize(entries),forecast=Math.round(s.completed/Math.max(entries.length,1)*settings.targetClinicalDaysPerWeek*4);return <section className="panel"><p className="eyebrow">Forecast · {settings.forecastLookbackWeeks}-week lookback</p><h3>Next month: approximately {entries.length?forecast:0} completed visits</h3><p className="notice">Quality: {entries.length>=40?"Moderate":"Limited"}. This local forecast is an estimate, not a guarantee.</p><div className="metrics"><Metric value={percent(safeRate(s.cancellations,s.scheduled))} label="cancellation rate"/><Metric value={percent(safeRate(s.noShows,s.scheduled))} label="no-show rate"/><Metric value={percent(safeRate(s.insurancePaidCents,s.netCollectedCents))} label="insurance share"/></div></section>}
 function SettingsPage({value,save}:{value:Settings,save:(s:Settings)=>Promise<void>}){const [s,setS]=useState(value);return <form className="panel form" onSubmit={e=>{e.preventDefault();void save(s)}}><h3>Practice and goals</h3><div className="fields"><label className="toggle-row"><span>Show top bar<small>Practice name and page title header</small></span><input type="checkbox" checked={s.showTopBar===true} onChange={e=>{const u={...s,showTopBar:e.target.checked};setS(u);void save(u);}}/></label></div><h3 style={{marginTop:24}}>Goals and clinical settings</h3><div className="fields"><label>Practice display name<input value={s.practiceName} onChange={e=>setS({...s,practiceName:e.target.value})}/></label><NumberField label="Clinical days per week" value={s.targetClinicalDaysPerWeek} onChange={v=>setS({...s,targetClinicalDaysPerWeek:v})}/><NumberField label="Maximum visits per day" value={s.maxCompletedVisitsPerDay} onChange={v=>setS({...s,maxCompletedVisitsPerDay:v})}/><label>Planning basis<select value={s.planningBasis} onChange={e=>setS({...s,planningBasis:e.target.value as Settings["planningBasis"]})}><option value="expected">Expected / allowed</option><option value="collected">Actually collected</option></select></label><label>Monthly revenue goal<span className="currency">$<input type="number" min="0" value={s.monthlyRevenueGoalCents/100} onChange={e=>setS({...s,monthlyRevenueGoalCents:toCents(e.target.value)})}/></span></label></div><button>Save settings</button></form>}
 function Action({title,text,button,action}:{title:string,text:string,button:string,action:()=>unknown}){return <section className="panel"><h3>{title}</h3><p>{text}</p><button onClick={()=>void action()}>{button}</button></section>}
+function UpdateBanner({info,api,onDismiss}:{info:{version:string,url:string},api:typeof window.practiceApi,onDismiss:()=>void}){
+  const [progress,setProgress]=useState<number|null>(null);
+  const [installing,setInstalling]=useState(false);
+  const [err,setErr]=useState("");
+  useEffect(()=>{api?.update.onProgress(pct=>setProgress(pct));},[]);
+  const install=async()=>{try{setErr("");setInstalling(true);await api?.update.install(info.url);}catch(e){setErr(e instanceof Error?e.message:"Download failed.");setInstalling(false);}};
+  return <div className="update-banner" role="status">
+    {!installing&&<><span>Version {info.version} is available.</span>
+      <button onClick={()=>void install()}>Update Now</button>
+      <button className="secondary" onClick={()=>void api?.update.openReleases()}>Download</button>
+      <button className="secondary" onClick={onDismiss}>Later</button>
+    </>}
+    {installing&&<><span style={{minWidth:220}}>{progress!==null?`Downloading... ${progress}%`:"Starting download..."}</span>
+      <div style={{flex:1,height:7,background:"rgba(0,0,0,.12)",borderRadius:4,overflow:"hidden"}}>
+        <div style={{width:`${progress??0}%`,height:"100%",background:"#176b52",borderRadius:4,transition:"width .25s"}}/>
+      </div>
+      <span style={{fontSize:".8rem",opacity:.7}}>Installer will launch on close</span>
+    </>}
+    {err&&<span style={{color:"#9b2c20"}}>{err}</span>}
+  </div>;
+}
 function AboutPage({api,updateInfo:initial,onPurge}:{api:typeof window.practiceApi,updateInfo:{version:string,url:string}|null,onPurge:()=>Promise<void>}){
   const [ver,setVer]=useState("...");
   const [buildInfo,setBuildInfo]=useState<{version:string,alpha_counter?:number,build_date?:string}|null>(null);
@@ -70,7 +91,13 @@ function AboutPage({api,updateInfo:initial,onPurge}:{api:typeof window.practiceA
     </div>
     <div className="panel">
       <h4 className="about-section-head">Software Updates</h4>
-      {upd&&upd.version&&<p className="notice" style={{marginBottom:12}}>Version {upd.version} is available. <button className="secondary" style={{marginLeft:8,padding:".4rem .8rem"}} onClick={()=>void api?.update.openReleases()}>Download</button></p>}
+      {upd&&upd.version&&<div style={{marginBottom:14}}>
+        <p className="notice" style={{marginBottom:10}}>Version {upd.version} is available.</p>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+          <button onClick={()=>void api?.update.install(upd.url)}>Update Now</button>
+          <button className="secondary" onClick={()=>void api?.update.openReleases()}>Download installer</button>
+        </div>
+      </div>}
       {upd===false&&<p className="notice" style={{marginBottom:12}}>You are running the latest version.</p>}
       <button className="secondary" onClick={()=>void check()} disabled={busy}>{busy?"Checking...":"Check for updates"}</button>
     </div>

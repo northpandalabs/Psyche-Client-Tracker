@@ -33,6 +33,12 @@ const api = {
       ipcRenderer.invoke("update:status"),
     openReleases: (): Promise<void> =>
       ipcRenderer.invoke("update:open-releases"),
+    install: (url: string): Promise<boolean> =>
+      ipcRenderer.invoke("update:install", url),
+    onProgress: (cb: (pct: number) => void): void => {
+      ipcRenderer.removeAllListeners("update:progress");
+      ipcRenderer.on("update:progress", (_e, pct: number) => cb(pct));
+    },
   },
   app: {
     version: (): Promise<string> => ipcRenderer.invoke("app:version"),

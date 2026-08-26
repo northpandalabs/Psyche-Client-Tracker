@@ -15,12 +15,11 @@ if (!fs.existsSync(infoPath)) {
   process.exit(1);
 }
 
-// Require a clean working tree (other than build_info.json) so we don't
-// accidentally tag with uncommitted changes.
+// Require a clean working tree (other than the two legal files we're about to write).
 const dirty = execSync("git status --porcelain", { cwd: root })
   .toString()
   .split("\n")
-  .filter(l => l.trim() && !l.includes("legal/build_info.json"))
+  .filter(l => l.trim() && !l.includes("legal/build_info.json") && !l.includes("legal/downloads.json"))
   .filter(Boolean);
 
 if (dirty.length > 0) {
@@ -36,13 +35,25 @@ const tag = `v${version}a${counter}`;
 
 console.log(`\nTagging ${tag}...\n`);
 
-// Persist the new counter
+// Persist the new counter in build_info.json
 info.alpha_counter = counter;
 info.build_date = new Date().toISOString().slice(0, 10);
 fs.writeFileSync(infoPath, JSON.stringify(info, null, 2) + "\n", "utf8");
 
+// Update downloads.json so the running app can detect this as the latest version.
+// The installer filename uses the base version (from package.json via electron-builder),
+// while the tag and release URL include the full alpha string.
+const dlPath = path.join(root, "legal", "downloads.json");
+const dl = JSON.parse(fs.readFileSync(dlPath, "utf8"));
+dl.version = `${version}a${counter}`;
+dl.released = new Date().toISOString().slice(0, 10);
+dl.base_download_url = `https://github.com/northpandalabs/Psyche-Client-Tracker/releases/download/${tag}`;
+if (!dl.platforms) dl.platforms = {};
+dl.platforms.windows = { filename_template: `Practice.Analytics.Setup.${version}.exe` };
+fs.writeFileSync(dlPath, JSON.stringify(dl, null, 2) + "\n", "utf8");
+
 // Commit, tag, push
-execSync("git add legal/build_info.json", { cwd: root, stdio: "inherit" });
+execSync("git add legal/build_info.json legal/downloads.json", { cwd: root, stdio: "inherit" });
 execSync(`git commit -m "Release ${tag}"`, { cwd: root, stdio: "inherit" });
 execSync(`git tag ${tag}`, { cwd: root, stdio: "inherit" });
 execSync("git push origin main", { cwd: root, stdio: "inherit" });

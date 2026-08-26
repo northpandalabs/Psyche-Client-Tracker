@@ -20,14 +20,20 @@ export interface UpdateInfo {
 
 let cachedUpdate: UpdateInfo | null = null;
 
+function parseVer(v: string): number[] {
+  const m = /^(\d+)\.(\d+)\.(\d+)(?:a(\d+))?$/.exec(v);
+  if (!m) return [-1, -1, -1, -1];
+  // Stable (no alpha suffix) ranks above any alpha by using MAX_SAFE_INTEGER.
+  const alpha = m[4] !== undefined ? Number(m[4]) : Number.MAX_SAFE_INTEGER;
+  return [Number(m[1]), Number(m[2]), Number(m[3]), alpha];
+}
+
 function semverGt(a: string, b: string): boolean {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
-  for (let i = 0; i < 3; i++) {
-    const av = pa[i] ?? 0;
-    const bv = pb[i] ?? 0;
-    if (av > bv) return true;
-    if (av < bv) return false;
+  const pa = parseVer(a);
+  const pb = parseVer(b);
+  for (let i = 0; i < 4; i++) {
+    if (pa[i] > pb[i]) return true;
+    if (pa[i] < pb[i]) return false;
   }
   return false;
 }
@@ -74,7 +80,7 @@ function msUntilNextNoon(): number {
 export async function checkNow(): Promise<UpdateInfo | null> {
   try {
     const data = await fetchDownloads();
-    if (!/^\d+\.\d+\.\d+$/.test(data.version)) return cachedUpdate;
+    if (!/^\d+\.\d+\.\d+(?:a\d+)?$/.test(data.version)) return cachedUpdate;
     if (semverGt(data.version, app.getVersion())) {
       const base = data.base_download_url ?? RELEASES_FALLBACK;
       const template = data.platforms?.windows?.filename_template ?? "Practice.Analytics.Setup.{version}.exe";
