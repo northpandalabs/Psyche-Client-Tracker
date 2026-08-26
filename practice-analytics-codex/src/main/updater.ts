@@ -1,5 +1,6 @@
 import https from "node:https";
 import { app } from "electron";
+import { semverGt } from "../shared/version.js";
 
 const DOWNLOADS_URL =
   "https://raw.githubusercontent.com/northpandalabs/Psyche-Client-Tracker/refs/heads/main/legal/downloads.json";
@@ -25,23 +26,6 @@ export function setRunningVersion(v: string): void {
   currentVersion = v;
 }
 
-function parseVer(v: string): number[] {
-  const m = /^(\d+)\.(\d+)\.(\d+)(?:a(\d+))?$/.exec(v);
-  if (!m) return [-1, -1, -1, -1];
-  // Stable (no alpha suffix) ranks above any alpha by using MAX_SAFE_INTEGER.
-  const alpha = m[4] !== undefined ? Number(m[4]) : Number.MAX_SAFE_INTEGER;
-  return [Number(m[1]), Number(m[2]), Number(m[3]), alpha];
-}
-
-function semverGt(a: string, b: string): boolean {
-  const pa = parseVer(a);
-  const pb = parseVer(b);
-  for (let i = 0; i < 4; i++) {
-    if (pa[i] > pb[i]) return true;
-    if (pa[i] < pb[i]) return false;
-  }
-  return false;
-}
 
 function fetchDownloads(): Promise<DownloadsJson> {
   return new Promise((resolve, reject) => {
