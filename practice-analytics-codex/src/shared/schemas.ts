@@ -9,9 +9,6 @@ export const dailyEntrySchema = z.object({
   patientPaidCents: money, otherPaidCents: money, adjustmentsCents: money, refundsCents: money,
   businessNote: z.string().trim().max(300),
 }).superRefine((value, context) => {
-  const completed = Object.values(value.visits).reduce((sum, item) => sum + item, 0);
-  if (completed + value.cancellationCount + value.noShowCount > value.scheduledCount)
-    context.addIssue({ code: "custom", path: ["scheduledCount"], message: "Scheduled appointments must cover completed visits, cancellations, and no-shows." });
   const totalPayments = value.insurancePaidCents + value.patientPaidCents + value.otherPaidCents;
   if (value.refundsCents > totalPayments)
     context.addIssue({ code: "custom", path: ["refundsCents"], message: "Refunds cannot exceed total payments received." });

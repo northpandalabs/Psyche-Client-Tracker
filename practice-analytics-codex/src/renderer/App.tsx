@@ -13,6 +13,8 @@ const emptyEntry=(date=isoToday()):DailyEntry=>({date,scheduledCount:0,cancellat
 const money=(c:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(c/100);
 const percent=(v:number|null)=>v===null?"—":`${(v*100).toFixed(1)}%`;
 const toCents=(v:string)=>Math.round((Number(v)||0)*100);
+const formatDate=(iso:string)=>{const d=new Date(iso+"T00:00:00");return d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});};
+const netOf=(e:DailyEntry)=>e.insurancePaidCents+e.patientPaidCents+e.otherPaidCents-e.refundsCents;
 
 export function App(){
  const api=window.practiceApi; const [auth,setAuth]=useState<{configured:boolean,unlocked:boolean}|null>(api?null:{configured:true,unlocked:true});
@@ -29,19 +31,75 @@ export function App(){
  if(!auth.unlocked)return <main className="center"><section className="auth"><div className="logo"><LogoMark size={44}/></div><h1>{auth.configured?"Welcome back":"Set up Practice Analytics"}</h1><p>{auth.configured?"Enter your local password to unlock your data.":"Create a password of at least 10 characters. There is no email recovery."}</p><label>Password<input autoFocus type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")void authenticate()}}/></label>{error&&<p className="error" role="alert">{error}</p>}<button onClick={()=>void authenticate()}>{auth.configured?"Unlock":"Create password"}</button></section></main>;
  if(!settings)return <main className="center">Loading…</main>;
  const save=async()=>{try{setError("");await api?.entries.save(entry);await refresh();setDirty(false);setPage("Dashboard");}catch(e){setError(e instanceof Error?e.message:"Could not save.");}};
- const chooseDate=(date:string)=>{setEntry(entries.find(e=>e.date===date)??emptyEntry(date));setDirty(false);};
+ const chooseDate=(date:string)=>{if(dirty&&date!==entry.date){if(!confirm("You have unsaved changes. Switch without saving?"))return;}setEntry(entries.find(e=>e.date===date)??emptyEntry(date));setDirty(false);};
  const updateEntry=(e:DailyEntry)=>{setEntry(e);setDirty(true);};
  const nav=["Dashboard","Daily Entry","Weekly / Monthly","Revenue Planner","Analytics","Import / Export","Backup / Restore","Settings","About"];
  return <div className="shell"><aside><div className="brand"><LogoMark size={36}/><h1>Practice<br/><span>Analytics</span></h1></div><nav>{nav.map(n=><button className={page===n?"active":""} onClick={()=>{if(page==="Daily Entry"&&dirty&&n!=="Daily Entry"){if(!confirm("You have unsaved changes. Leave without saving?"))return;setDirty(false);}setPage(n);}} key={n}>{n}</button>)}</nav><button className="lock" onClick={async()=>{await api?.auth.lock();setAuth({configured:true,unlocked:false})}}>Lock application</button></aside><main className="content">{settings.showTopBar!==false&&<header className="top"><div><p className="eyebrow">{settings.practiceName}</p><h2>{page}</h2></div><button className="secondary" onClick={()=>{setEntry(emptyEntry());setPage("Daily Entry")}}>+ Add daily entry</button></header>}{error&&<p className="error" role="alert">{error}</p>}
  {updateInfo&&!updateDismissed&&<UpdateBanner info={updateInfo} api={api} onDismiss={()=>setUpdateDismissed(true)}/>}
- {page==="Dashboard"&&<Dashboard entries={entries} settings={settings}/>} {page==="Daily Entry"&&<EntryForm entry={entry} setEntry={updateEntry} save={save} existing={entries.some(e=>e.date===entry.date)} chooseDate={chooseDate}/>} {page==="Weekly / Monthly"&&<Periods entries={entries}/>} {page==="Revenue Planner"&&<Planner entries={entries} settings={settings}/>} {page==="Analytics"&&<Analytics entries={entries} settings={settings}/>} {page==="Settings"&&<SettingsPage value={settings} save={async s=>{await api?.settings.save(s);setSettings(s)}}/>} {page==="About"&&<AboutPage api={api} updateInfo={updateInfo} onPurge={async()=>{await refresh();setSettings(await api?.settings.get() as Settings);setPage("Dashboard");}}/>} {page==="Import / Export"&&<Action title="Export aggregate data" text="Create a portable CSV of counts and financial totals. Business notes are excluded." button="Choose CSV destination" action={()=>api?.exportCsv()}/>} {page==="Backup / Restore"&&<Action title="Create a local backup" text="Choose a private destination and retain multiple dated backups." button="Create backup" action={()=>api?.createBackup()}/>}</main></div>;
+ {page==="Dashboard"&&<Dashboard entries={entries} settings={settings}/>} {page==="Daily Entry"&&<EntryForm entries={entries} entry={entry} setEntry={updateEntry} save={save} existing={entries.some(e=>e.date===entry.date)} chooseDate={chooseDate}/>} {page==="Weekly / Monthly"&&<Periods entries={entries} onEdit={d=>{chooseDate(d);setPage("Daily Entry");}}/>} {page==="Revenue Planner"&&<Planner entries={entries} settings={settings}/>} {page==="Analytics"&&<Analytics entries={entries} settings={settings}/>} {page==="Settings"&&<SettingsPage value={settings} save={async s=>{await api?.settings.save(s);setSettings(s)}}/>} {page==="About"&&<AboutPage api={api} updateInfo={updateInfo} onPurge={async()=>{await refresh();setSettings(await api?.settings.get() as Settings);setPage("Dashboard");}}/>} {page==="Import / Export"&&<Action title="Export aggregate data" text="Create a portable CSV of counts and financial totals. Business notes are excluded." button="Choose CSV destination" action={()=>api?.exportCsv()}/>} {page==="Backup / Restore"&&<Action title="Create a local backup" text="Choose a private destination and retain multiple dated backups." button="Create backup" action={()=>api?.createBackup()}/>}</main></div>;
 }
 
 const Metric=({value,label}:{value:string,label:string})=><p><strong>{value}</strong>{label}</p>;
 const NumberField=({label,value,onChange}:{label:string,value:number,onChange:(v:number)=>void})=><label>{label}<input type="number" min="0" step="1" value={value} onChange={e=>onChange(Number(e.target.value))}/></label>;
 
-function EntryForm({entry,setEntry,save,existing,chooseDate}:{entry:DailyEntry,setEntry:(e:DailyEntry)=>void,save:()=>void,existing:boolean,chooseDate:(d:string)=>void}){const count=(key:keyof DailyEntry,label:string)=><NumberField label={label} value={entry[key] as number} onChange={v=>setEntry({...entry,[key]:v})}/>;const finances:[keyof DailyEntry,string][]=[["grossBilledCents","Gross billed"],["expectedAllowedCents","Expected / allowed"],["insurancePaidCents","Insurance paid"],["patientPaidCents","Patient paid"],["otherPaidCents","Other paid"],["adjustmentsCents","Adjustments / write-offs"],["refundsCents","Refunds"]];return <form className="panel form" onSubmit={e=>{e.preventDefault();save()}}><div className="formhead"><div><h3>{existing?"Editing existing day":"New daily entry"}</h3><p>Enter aggregate totals only.</p></div><label>Date<input type="date" value={entry.date} onChange={e=>chooseDate(e.target.value)}/></label></div><h4>Appointments</h4><div className="fields">{count("scheduledCount","Scheduled appointments")}{Object.entries(visitLabels).map(([code,label])=><NumberField key={code} label={label} value={entry.visits[code as VisitCode]} onChange={v=>setEntry({...entry,visits:{...entry.visits,[code]:v}})}/>)}{count("cancellationCount","Cancellations")}{count("noShowCount","No-shows")}</div><p className="notice">Completed: <strong>{completedVisits(entry)}</strong> · Completion rate: <strong>{percent(safeRate(completedVisits(entry),entry.scheduledCount))}</strong></p><h4>Financials</h4><div className="fields">{finances.map(([key,label])=><label key={key}>{label}<span className="currency">$<input type="number" min="0" step="0.01" value={(entry[key] as number)/100} onChange={e=>setEntry({...entry,[key]:toCents(e.target.value)})}/></span></label>)}</div><label className="wide"><strong>Do not enter patient names or other patient-identifying information.</strong>Optional business note<textarea maxLength={300} value={entry.businessNote} onChange={e=>setEntry({...entry,businessNote:e.target.value})}/></label><button type="submit">Save day</button></form>}
-function Periods({entries}:{entries:DailyEntry[]}){const [month,setMonth]=useState(isoToday().slice(0,7));const s=summarize(entries.filter(e=>e.date.startsWith(month)));return <section className="panel"><label>Month<input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label><h3>{s.completed} completed visits</h3><div className="metrics"><Metric value={String(s.scheduled)} label="scheduled"/><Metric value={String(s.newPatients)} label="new patients"/><Metric value={String(s.followups)} label="follow-ups"/><Metric value={money(s.netCollectedCents)} label="net collected"/>{s.outstandingCents>0?<Metric value={money(s.outstandingCents)} label="outstanding"/>:<Metric value="Fully collected" label="balance"/>}</div></section>}
+function EntryForm({entries,entry,setEntry,save,existing,chooseDate}:{entries:DailyEntry[],entry:DailyEntry,setEntry:(e:DailyEntry)=>void,save:()=>void,existing:boolean,chooseDate:(d:string)=>void}){
+  const recent=[...entries].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
+  const count=(key:keyof DailyEntry,label:string)=><NumberField label={label} value={entry[key] as number} onChange={v=>setEntry({...entry,[key]:v})}/>;
+  const finances:[keyof DailyEntry,string][]=[["grossBilledCents","Gross billed"],["expectedAllowedCents","Expected / allowed"],["insurancePaidCents","Insurance paid"],["patientPaidCents","Patient paid"],["otherPaidCents","Other paid"],["adjustmentsCents","Adjustments / write-offs"],["refundsCents","Refunds"]];
+  return <div className="entry-layout">
+    <form className="panel form" onSubmit={e=>{e.preventDefault();save()}}>
+      <div className="formhead"><div><h3>{existing?"Editing existing day":"New daily entry"}</h3><p>Enter aggregate totals only.</p></div><label>Date<input type="date" value={entry.date} onChange={e=>chooseDate(e.target.value)}/></label></div>
+      <h4>Appointments</h4>
+      <div className="fields">{count("scheduledCount","Scheduled appointments")}{Object.entries(visitLabels).map(([code,label])=><NumberField key={code} label={label} value={entry.visits[code as VisitCode]} onChange={v=>setEntry({...entry,visits:{...entry.visits,[code]:v}})}/>)}{count("cancellationCount","Cancellations")}{count("noShowCount","No-shows")}</div>
+      <p className="notice">Completed: <strong>{completedVisits(entry)}</strong> &middot; Completion rate: <strong>{percent(safeRate(completedVisits(entry),entry.scheduledCount))}</strong></p>
+      <h4>Financials</h4>
+      <div className="fields">{finances.map(([key,label])=><label key={key}>{label}<span className="currency">$<input type="number" min="0" step="0.01" value={(entry[key] as number)/100} onChange={e=>setEntry({...entry,[key]:toCents(e.target.value)})}/></span></label>)}</div>
+      <label className="wide"><strong>Do not enter patient names or other patient-identifying information.</strong>Optional business note<textarea maxLength={300} value={entry.businessNote} onChange={e=>setEntry({...entry,businessNote:e.target.value})}/></label>
+      <button type="submit">Save day</button>
+    </form>
+    <aside className="entry-history panel">
+      <p className="eyebrow" style={{margin:"0 0 12px"}}>Recent entries</p>
+      {recent.length===0
+        ?<p className="empty" style={{padding:"16px 0"}}>No entries yet.</p>
+        :recent.map(r=><button key={r.date} type="button" className={"entry-hist-row"+(r.date===entry.date?" active":"")} onClick={()=>chooseDate(r.date)}>
+          <span className="entry-hist-date">{formatDate(r.date)}</span>
+          <span className="entry-hist-detail">{completedVisits(r)} visits &middot; {money(netOf(r))}</span>
+        </button>)
+      }
+    </aside>
+  </div>;
+}
+function Periods({entries,onEdit}:{entries:DailyEntry[],onEdit?:(d:string)=>void}){
+  const [month,setMonth]=useState(isoToday().slice(0,7));
+  const monthEntries=[...entries.filter(e=>e.date.startsWith(month))].sort((a,b)=>b.date.localeCompare(a.date));
+  const s=summarize(monthEntries);
+  return <section className="panel">
+    <label>Month<input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label>
+    <h3>{s.completed} completed visits</h3>
+    <div className="metrics">
+      <Metric value={String(s.scheduled)} label="scheduled"/>
+      <Metric value={String(s.newPatients)} label="new patients"/>
+      <Metric value={String(s.followups)} label="follow-ups"/>
+      <Metric value={money(s.netCollectedCents)} label="net collected"/>
+      {s.outstandingCents>0?<Metric value={money(s.outstandingCents)} label="outstanding"/>:<Metric value="Fully collected" label="balance"/>}
+    </div>
+    <h4 style={{borderTop:"1px solid #dce6e2",paddingTop:18,marginTop:22}}>Daily entries</h4>
+    {monthEntries.length===0
+      ?<p className="empty">No entries recorded for this month.</p>
+      :<table className="entry-log">
+        <thead><tr><th>Date</th><th>Scheduled</th><th>Completed</th><th>Rate</th><th>Net collected</th>{onEdit&&<th></th>}</tr></thead>
+        <tbody>{monthEntries.map(e=><tr key={e.date}>
+          <td>{formatDate(e.date)}</td>
+          <td>{e.scheduledCount}</td>
+          <td>{completedVisits(e)}</td>
+          <td>{percent(safeRate(completedVisits(e),e.scheduledCount))}</td>
+          <td>{money(netOf(e))}</td>
+          {onEdit&&<td><button type="button" className="secondary" style={{padding:"4px 12px",fontSize:".8rem"}} onClick={()=>onEdit(e.date)}>Edit</button></td>}
+        </tr>)}</tbody>
+      </table>
+    }
+  </section>;
+}
 function Planner({entries,settings}:{entries:DailyEntry[],settings:Settings}){const [goal,setGoal]=useState(settings.monthlyRevenueGoalCents);const s=summarize(entries),current=settings.planningBasis==="expected"?s.expectedAllowedCents:s.netCollectedCents,p=planner(goal,current,entries,settings);return <section className="panel"><p className="eyebrow">Business-planning estimate</p><h3>Revenue target</h3><p className="notice" style={{marginBottom:12,fontSize:".88rem"}}>Using: <strong>{settings.planningBasis==="expected"?"Expected / allowed":"Actually collected"}</strong></p><label>Target amount<span className="currency">$<input type="number" min="0" value={goal/100} onChange={e=>setGoal(toCents(e.target.value))}/></span></label><section className="cards"><article><span>Revenue gap</span><strong>{money(p.gapCents)}</strong></article><article><span>Average per visit</span><strong>{money(p.averageCents)}</strong></article><article><span>Additional visits</span><strong>{p.visitsNeeded??"—"}</strong></article><article><span>Capacity check</span><strong>{p.feasible?"Within capacity":"Above capacity"}</strong></article></section><p className="notice">Mathematical estimate for business planning, not clinical scheduling advice.</p></section>}
 function Analytics({entries,settings}:{entries:DailyEntry[],settings:Settings}){const s=summarize(entries),forecast=Math.round(s.completed/Math.max(entries.length,1)*settings.targetClinicalDaysPerWeek*4);return <section className="panel"><p className="eyebrow">Forecast · {settings.forecastLookbackWeeks}-week lookback</p><h3>Next month: approximately {entries.length?forecast:0} completed visits</h3><p className="notice">Quality: {entries.length>=40?"Moderate":"Limited"}. This local forecast is an estimate, not a guarantee.</p><div className="metrics"><Metric value={percent(safeRate(s.cancellations,s.scheduled))} label="cancellation rate"/><Metric value={percent(safeRate(s.noShows,s.scheduled))} label="no-show rate"/><Metric value={percent(safeRate(s.insurancePaidCents,s.netCollectedCents))} label="insurance share"/></div></section>}
 function SettingsPage({value,save}:{value:Settings,save:(s:Settings)=>Promise<void>}){const [s,setS]=useState(value);return <form className="panel form" onSubmit={e=>{e.preventDefault();void save(s)}}><h3>Display</h3><div className="fields"><label className="toggle-row"><span>Show top bar<small>Practice name and page title header</small></span><input type="checkbox" checked={s.showTopBar===true} onChange={e=>{const u={...s,showTopBar:e.target.checked};setS(u);void save(u);}}/></label>

@@ -87,8 +87,8 @@ describe("dailyEntrySchema -- invalid input", () => {
     expect(dailyEntrySchema.safeParse({ ...validEntry, businessNote: "x".repeat(301) }).success).toBe(false);
   });
 
-  it("rejects when completed + cancellations + no-shows exceed scheduled", () => {
-    // 8 completed + 1 cancel + 1 no-show = 10, but scheduledCount is 9 -- over by 1
+  it("accepts when completed + cancellations + no-shows exceed scheduled (re-fill / walk-in scenario)", () => {
+    // previously rejected; removed constraint because walk-ins and re-fills are legitimate
     const over = {
       ...validEntry,
       scheduledCount: 9,
@@ -96,15 +96,10 @@ describe("dailyEntrySchema -- invalid input", () => {
       noShowCount: 1,
       visits: { new_psych_eval: 2, followup_med: 3, therapy_med: 1, therapy_only: 1, other: 1 },
     };
-    const result = dailyEntrySchema.safeParse(over);
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0].message).toContain("Scheduled appointments");
-    }
+    expect(dailyEntrySchema.safeParse(over).success).toBe(true);
   });
 
   it("accepts when completed + cancellations + no-shows exactly equal scheduled", () => {
-    // 8 completed + 1 cancel + 1 no-show = 10 scheduled exactly
     const exact = {
       ...validEntry,
       scheduledCount: 10,
@@ -220,6 +215,135 @@ describe("dailyEntrySchema -- business note trim", () => {
   it("accepts an empty business note after trim (blank is allowed)", () => {
     // trim() runs before max(300) so whitespace-only is trimmed to "" which is valid (no min constraint)
     expect(dailyEntrySchema.safeParse({ ...validEntry, businessNote: "   " }).success).toBe(true);
+  });
+});
+
+describe("dailyEntrySchema -- scheduledCount is informational", () => {
+  it("accepts scheduledCount = 0 with completed visits (pure walk-in day)", () => {
+    const walkin = {
+      ...validEntry,
+      scheduledCount: 0,
+      cancellationCount: 0,
+      noShowCount: 0,
+      visits: { new_psych_eval: 0, followup_med: 4, therapy_med: 0, therapy_only: 0, other: 0 },
+    };
+    expect(dailyEntrySchema.safeParse(walkin).success).toBe(true);
+  });
+
+  it("accepts completions far exceeding scheduledCount", () => {
+    const heavy = {
+      ...validEntry,
+      scheduledCount: 5,
+      cancellationCount: 3,
+      noShowCount: 2,
+      visits: { new_psych_eval: 4, followup_med: 6, therapy_med: 3, therapy_only: 3, other: 2 },
+    };
+    // 18 completed + 3 + 2 = 23 vs 5 scheduled
+    expect(dailyEntrySchema.safeParse(heavy).success).toBe(true);
+  });
+
+  it("accepts cancellations alone exceeding scheduledCount", () => {
+    const manyCancels = { ...validEntry, scheduledCount: 2, cancellationCount: 5, noShowCount: 0 };
+    expect(dailyEntrySchema.safeParse(manyCancels).success).toBe(true);
+  });
+
+  it("accepts no-shows alone exceeding scheduledCount", () => {
+    const manyNoShows = { ...validEntry, scheduledCount: 1, cancellationCount: 0, noShowCount: 4 };
+    expect(dailyEntrySchema.safeParse(manyNoShows).success).toBe(true);
+  });
+
+  it("accepts scheduledCount = 0 with cancellations and no-shows", () => {
+    const zeroed = { ...validEntry, scheduledCount: 0, cancellationCount: 2, noShowCount: 1 };
+    expect(dailyEntrySchema.safeParse(zeroed).success).toBe(true);
+  });
+});
+
+describe("dailyEntrySchema -- field boundaries", () => {
+  it("accepts scheduledCount at maximum (10000)", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, scheduledCount: 10000 }).success).toBe(true);
+  });
+
+  it("rejects scheduledCount above maximum (10001)", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, scheduledCount: 10001 }).success).toBe(false);
+  });
+
+  it("rejects non-integer scheduledCount", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, scheduledCount: 2.5 }).success).toBe(false);
+  });
+
+  it("accepts grossBilledCents at maximum (1_000_000_000)", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, grossBilledCents: 1_000_000_000 }).success).toBe(true);
+  });
+
+  it("rejects grossBilledCents above maximum", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, grossBilledCents: 1_000_000_001 }).success).toBe(false);
+  });
+
+  it("rejects non-integer cents amount", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, grossBilledCents: 100.5 }).success).toBe(false);
+    expect(dailyEntrySchema.safeParse({ ...validEntry, insurancePaidCents: 0.1 }).success).toBe(false);
+  });
+
+  it("accepts all visit codes at maximum value (10000 each)", () => {
+    const maxVisits = {
+      ...validEntry,
+      visits: { new_psych_eval: 10000, followup_med: 10000, therapy_med: 10000, therapy_only: 10000, other: 10000 },
+    };
+    expect(dailyEntrySchema.safeParse(maxVisits).success).toBe(true);
+  });
+
+  it("rejects any individual visit code above maximum", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, visits: { ...validEntry.visits, followup_med: 10001 } }).success).toBe(false);
+    expect(dailyEntrySchema.safeParse({ ...validEntry, visits: { ...validEntry.visits, other: 10001 } }).success).toBe(false);
+  });
+
+  it("rejects negative visit counts", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, visits: { ...validEntry.visits, therapy_only: -1 } }).success).toBe(false);
+  });
+
+  it("accepts date at start and end of year", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, date: "2026-01-01" }).success).toBe(true);
+    expect(dailyEntrySchema.safeParse({ ...validEntry, date: "2026-12-31" }).success).toBe(true);
+  });
+
+  it("rejects date with time component", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, date: "2026-08-01T00:00:00" }).success).toBe(false);
+  });
+
+  it("rejects missing visits object", () => {
+    const { visits: _omit, ...withoutVisits } = validEntry;
+    expect(dailyEntrySchema.safeParse(withoutVisits).success).toBe(false);
+  });
+
+  it("rejects missing individual visit code", () => {
+    const { other: _omit, ...missingOther } = validEntry.visits;
+    expect(dailyEntrySchema.safeParse({ ...validEntry, visits: missingOther }).success).toBe(false);
+  });
+});
+
+describe("dailyEntrySchema -- all financial combinations", () => {
+  it("accepts all financial fields at zero", () => {
+    const allZero = {
+      ...validEntry,
+      grossBilledCents: 0, expectedAllowedCents: 0,
+      insurancePaidCents: 0, patientPaidCents: 0, otherPaidCents: 0,
+      adjustmentsCents: 0, refundsCents: 0,
+    };
+    expect(dailyEntrySchema.safeParse(allZero).success).toBe(true);
+  });
+
+  it("accepts when only insurance paid (no patient or other payment)", () => {
+    const insOnly = { ...validEntry, patientPaidCents: 0, otherPaidCents: 0 };
+    expect(dailyEntrySchema.safeParse(insOnly).success).toBe(true);
+  });
+
+  it("accepts gross billed higher than expected allowed (writeoffs scenario)", () => {
+    const writeoff = { ...validEntry, grossBilledCents: 500000, expectedAllowedCents: 300000 };
+    expect(dailyEntrySchema.safeParse(writeoff).success).toBe(true);
+  });
+
+  it("rejects negative adjustments", () => {
+    expect(dailyEntrySchema.safeParse({ ...validEntry, adjustmentsCents: -1 }).success).toBe(false);
   });
 });
 

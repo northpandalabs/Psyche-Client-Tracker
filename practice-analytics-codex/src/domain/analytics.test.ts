@@ -96,6 +96,117 @@ describe("summarize", () => {
   });
 });
 
+describe("completedVisits -- edge cases", () => {
+  it("counts only non-zero visit types", () => {
+    const e = { ...entry, visits: { new_psych_eval: 0, followup_med: 0, therapy_med: 0, therapy_only: 0, other: 5 } };
+    expect(completedVisits(e)).toBe(5);
+  });
+
+  it("handles very large visit counts without overflow", () => {
+    const e = { ...entry, visits: { new_psych_eval: 10000, followup_med: 10000, therapy_med: 10000, therapy_only: 10000, other: 10000 } };
+    expect(completedVisits(e)).toBe(50000);
+  });
+
+  it("returns 0 for an entry with scheduledCount > 0 but no completed visits", () => {
+    const e = { ...entry, visits: { new_psych_eval: 0, followup_med: 0, therapy_med: 0, therapy_only: 0, other: 0 } };
+    expect(completedVisits(e)).toBe(0);
+  });
+});
+
+describe("safeRate -- edge cases", () => {
+  it("returns 1.0 when part equals total", () => expect(safeRate(10, 10)).toBe(1));
+  it("returns value > 1 when part exceeds total (walk-in scenario)", () => expect(safeRate(12, 10)).toBeCloseTo(1.2));
+  it("returns null for both-zero input", () => expect(safeRate(0, 0)).toBeNull());
+  it("returns 0.0 when part is zero and total is non-zero", () => expect(safeRate(0, 5)).toBe(0));
+});
+
+describe("netCollected -- edge cases", () => {
+  it("returns negative when refunds exceed payments", () => {
+    expect(netCollected({ insurancePaidCents: 100, patientPaidCents: 0, otherPaidCents: 0, refundsCents: 150 })).toBe(-50);
+  });
+
+  it("returns zero when all fields are zero", () => {
+    expect(netCollected({ insurancePaidCents: 0, patientPaidCents: 0, otherPaidCents: 0, refundsCents: 0 })).toBe(0);
+  });
+
+  it("sums all three payment sources before subtracting refunds", () => {
+    expect(netCollected({ insurancePaidCents: 50000, patientPaidCents: 10000, otherPaidCents: 5000, refundsCents: 5000 })).toBe(60000);
+  });
+});
+
+describe("outstanding -- edge cases", () => {
+  it("returns 0 when expected equals collected plus adjustments", () => {
+    expect(outstanding(100000, 80000, 20000)).toBe(0);
+  });
+
+  it("returns 0 when collected exceeds expected (overpayment)", () => {
+    expect(outstanding(50000, 100000, 0)).toBe(0);
+  });
+
+  it("clamps at 0 when adjustments alone exceed expected", () => {
+    expect(outstanding(10000, 0, 20000)).toBe(0);
+  });
+
+  it("computes correctly with no adjustments", () => {
+    expect(outstanding(200000, 150000, 0)).toBe(50000);
+  });
+});
+
+describe("summarize -- additional coverage", () => {
+  it("counts newPatients from new_psych_eval only", () => {
+    const e = { ...entry, visits: { new_psych_eval: 7, followup_med: 0, therapy_med: 5, therapy_only: 0, other: 0 } };
+    expect(summarize([e]).newPatients).toBe(7);
+  });
+
+  it("counts followups from followup_med only", () => {
+    const e = { ...entry, visits: { new_psych_eval: 0, followup_med: 4, therapy_med: 3, therapy_only: 2, other: 1 } };
+    expect(summarize([e]).followups).toBe(4);
+  });
+
+  it("sums cancellations and no-shows across entries", () => {
+    const e2 = { ...entry, date: "2026-08-15", cancellationCount: 3, noShowCount: 2 };
+    const s = summarize([entry, e2]);
+    expect(s.cancellations).toBe(entry.cancellationCount + 3);
+    expect(s.noShows).toBe(entry.noShowCount + 2);
+  });
+
+  it("sums gross billed and expected allowed across entries", () => {
+    const e2 = { ...entry, date: "2026-08-15", grossBilledCents: 100000, expectedAllowedCents: 75000 };
+    const s = summarize([entry, e2]);
+    expect(s.grossBilledCents).toBe(entry.grossBilledCents + 100000);
+    expect(s.expectedAllowedCents).toBe(entry.expectedAllowedCents + 75000);
+  });
+
+  it("outstandingCents does not go negative when one day is overpaid", () => {
+    const overpaid = { ...entry, expectedAllowedCents: 1000, insurancePaidCents: 99999, patientPaidCents: 0, otherPaidCents: 0, refundsCents: 0, adjustmentsCents: 0 };
+    const s = summarize([overpaid]);
+    expect(s.outstandingCents).toBe(0);
+  });
+
+  it("calculates outstandingCents per-day before summing (prevents cross-day netting)", () => {
+    // Day A: expected=100000, net=50000, adjustments=0 -> outstanding=50000
+    // Day B: expected=10000, net=90000, adjustments=0 -> outstanding=0 (clamped)
+    // Total = 50000, NOT 100000 - 90000 - 50000 = -40000
+    const dayA = { ...entry, date: "2026-08-01", expectedAllowedCents: 100000, insurancePaidCents: 50000, patientPaidCents: 0, otherPaidCents: 0, refundsCents: 0, adjustmentsCents: 0 };
+    const dayB = { ...entry, date: "2026-08-02", expectedAllowedCents: 10000, insurancePaidCents: 90000, patientPaidCents: 0, otherPaidCents: 0, refundsCents: 0, adjustmentsCents: 0 };
+    expect(summarize([dayA, dayB]).outstandingCents).toBe(50000);
+  });
+
+  it("handles a single-entry list identically to operating on the entry directly", () => {
+    const s = summarize([entry]);
+    expect(s.netCollectedCents).toBe(netCollected(entry));
+  });
+
+  it("handles 100 identical entries without precision loss", () => {
+    const many = Array.from({ length: 100 }, (_, i) =>
+      ({ ...entry, date: `2026-${String(Math.floor(i / 31) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}` })
+    );
+    const s = summarize(many);
+    expect(s.completed).toBe(completedVisits(entry) * 100);
+    expect(s.netCollectedCents).toBe(netCollected(entry) * 100);
+  });
+});
+
 describe("planner", () => {
   it("returns zero gap and zero visits when current meets goal", () => {
     const p = planner(100000, 100000, [entry], settings);

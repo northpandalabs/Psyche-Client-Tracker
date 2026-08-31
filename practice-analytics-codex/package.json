@@ -10,14 +10,15 @@
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "build": "tsc --noEmit && vite build && tsc -p tsconfig.electron.json",
+    "pretest": "npm rebuild better-sqlite3",
+    "build": "electron-rebuild -f -w better-sqlite3 && tsc --noEmit && vite build && tsc -p tsconfig.electron.json",
     "dist:win": "npm run build && electron-builder --win nsis",
     "dist:publish": "npm run build && electron-builder --win portable"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.0.0",
-    "better-sqlite3": "^12.2.0",
     "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.2.0",
     "drizzle-orm": "^0.44.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -25,18 +26,19 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.2.0",
+    "@eslint/js": "^9.0.0",
     "@playwright/test": "^1.54.0",
-    "@types/node": "^24.0.0",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.0.0",
     "electron": "^37.0.0",
     "electron-builder": "^26.0.0",
     "eslint": "^9.0.0",
-    "@eslint/js": "^9.0.0",
-    "typescript-eslint": "^8.0.0",
     "typescript": "^5.8.0",
+    "typescript-eslint": "^8.0.0",
     "vite": "^7.0.0",
     "vitest": "^3.0.0"
   },
@@ -53,7 +55,10 @@
       "package.json"
     ],
     "extraResources": [
-      { "from": "../legal/build_info.json", "to": "build_info.json" }
+      {
+        "from": "../legal/build_info.json",
+        "to": "build_info.json"
+      }
     ],
     "win": {
       "target": "nsis",
